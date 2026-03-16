@@ -2,8 +2,8 @@
 
 [![webpage](https://img.shields.io/badge/🌐-Website%20-blue.svg)](https://jdd-3d.github.io/SketchDreamer/) 
 
-*[Dongdong Jing], [Xingtao Wang](https://homepage.hit.edu.cn/xtwang),
-[Hengyu Man], [Yanfeng Gu](https://homepage.hit.edu.cn/guyf?lang=zh), and [Xiaopeng Fan](https://homepage.hit.edu.cn/xiaopengfan?lang=zh)*
+*Dongdong Jing, [Xingtao Wang](https://homepage.hit.edu.cn/xtwang),
+[Hengyu Man](https://homepage.hit.edu.cn/manhengyu?lang=zh), [Yanfeng Gu](https://homepage.hit.edu.cn/guyf?lang=zh), and [Xiaopeng Fan](https://homepage.hit.edu.cn/xiaopengfan?lang=zh)*
 
 ![alt SketchDreamer](./static/images/A0.png)
 
