@@ -1,0 +1,136 @@
+var obj_custom_items = [
+    { name: "", video: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/0.mp4", model: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/1.mp4", model: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/2.mp4", model: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/3.mp4", model: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/4.mp4", model: "3D_results/Akhal-Teke_horse+typical_vehicle_pirate_ship/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/bee+typical_vehicle_biplane/0.mp4", model: "3D_results/bee+typical_vehicle_biplane/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/bee+typical_vehicle_biplane/1.mp4", model: "3D_results/bee+typical_vehicle_biplane/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/bee+typical_vehicle_biplane/2.mp4", model: "3D_results/bee+typical_vehicle_biplane/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/bee+typical_vehicle_biplane/3.mp4", model: "3D_results/bee+typical_vehicle_biplane/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/bee+typical_vehicle_biplane/4.mp4", model: "3D_results/bee+typical_vehicle_biplane/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Big_Mesh_red+typical_humanoid_goblin/0.mp4", model: "3D_results/Big_Mesh_red+typical_humanoid_goblin/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Big_Mesh_red+typical_humanoid_goblin/1.mp4", model: "3D_results/Big_Mesh_red+typical_humanoid_goblin/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Big_Mesh_red+typical_humanoid_goblin/2.mp4", model: "3D_results/Big_Mesh_red+typical_humanoid_goblin/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Big_Mesh_red+typical_humanoid_goblin/3.mp4", model: "3D_results/Big_Mesh_red+typical_humanoid_goblin/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Big_Mesh_red+typical_humanoid_goblin/4.mp4", model: "3D_results/Big_Mesh_red+typical_humanoid_goblin/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/0.mp4", model: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/1.mp4", model: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/2.mp4", model: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/3.mp4", model: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/4.mp4", model: "3D_results/typical_vehicle_pirate_ship+typical_vehicle_biplane/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Christmas_tree+Staff/0.mp4", model: "3D_results/Christmas_tree+Staff/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Christmas_tree+Staff/1.mp4", model: "3D_results/Christmas_tree+Staff/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Christmas_tree+Staff/2.mp4", model: "3D_results/Christmas_tree+Staff/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Christmas_tree+Staff/3.mp4", model: "3D_results/Christmas_tree+Staff/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Christmas_tree+Staff/4.mp4", model: "3D_results/Christmas_tree+Staff/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dark_Sun_Wukong+red_tree/0.mp4", model: "3D_results/Dark_Sun_Wukong+red_tree/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dark_Sun_Wukong+red_tree/1.mp4", model: "3D_results/Dark_Sun_Wukong+red_tree/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dark_Sun_Wukong+red_tree/2.mp4", model: "3D_results/Dark_Sun_Wukong+red_tree/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dark_Sun_Wukong+red_tree/3.mp4", model: "3D_results/Dark_Sun_Wukong+red_tree/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dark_Sun_Wukong+red_tree/4.mp4", model: "3D_results/Dark_Sun_Wukong+red_tree/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dragon+Super_Big_Mech/0.mp4", model: "3D_results/Dragon+Super_Big_Mech/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dragon+Super_Big_Mech/1.mp4", model: "3D_results/Dragon+Super_Big_Mech/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dragon+Super_Big_Mech/2.mp4", model: "3D_results/Dragon+Super_Big_Mech/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dragon+Super_Big_Mech/3.mp4", model: "3D_results/Dragon+Super_Big_Mech/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Dragon+Super_Big_Mech/4.mp4", model: "3D_results/Dragon+Super_Big_Mech/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Pigsy+Sun_Wukong/0.mp4", model: "3D_results/Pigsy+Sun_Wukong/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Pigsy+Sun_Wukong/1.mp4", model: "3D_results/Pigsy+Sun_Wukong/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Pigsy+Sun_Wukong/2.mp4", model: "3D_results/Pigsy+Sun_Wukong/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Pigsy+Sun_Wukong/3.mp4", model: "3D_results/Pigsy+Sun_Wukong/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Pigsy+Sun_Wukong/4.mp4", model: "3D_results/Pigsy+Sun_Wukong/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/0.mp4", model: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/1.mp4", model: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/2.mp4", model: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/3.mp4", model: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/4.mp4", model: "3D_results/Playmates_nickelodeon_teenage_mutant_ninja_turtles_shredder+typical_building_space_station/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_creature_elephant+typical_vehicle_excavator/0.mp4", model: "3D_results/typical_creature_elephant+typical_vehicle_excavator/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_creature_elephant+typical_vehicle_excavator/1.mp4", model: "3D_results/typical_creature_elephant+typical_vehicle_excavator/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_creature_elephant+typical_vehicle_excavator/2.mp4", model: "3D_results/typical_creature_elephant+typical_vehicle_excavator/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_creature_elephant+typical_vehicle_excavator/3.mp4", model: "3D_results/typical_creature_elephant+typical_vehicle_excavator/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_creature_elephant+typical_vehicle_excavator/4.mp4", model: "3D_results/typical_creature_elephant+typical_vehicle_excavator/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/0.mp4", model: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/1.mp4", model: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/2.mp4", model: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/3.mp4", model: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/4.mp4", model: "3D_results/typical_vehicle_excavator+typical_vehicle_bulldozer/4.glb", exposure: 3 },
+    { name: "", video: "3D_results/Bull_Demon_King+head/0.mp4", model: "3D_results/Bull_Demon_King+head/0.glb", exposure: 3 },
+    { name: "", video: "3D_results/Bull_Demon_King+head/1.mp4", model: "3D_results/Bull_Demon_King+head/1.glb", exposure: 3 },
+    { name: "", video: "3D_results/Bull_Demon_King+head/2.mp4", model: "3D_results/Bull_Demon_King+head/2.glb", exposure: 3 },
+    { name: "", video: "3D_results/Bull_Demon_King+head/3.mp4", model: "3D_results/Bull_Demon_King+head/3.glb", exposure: 3 },
+    { name: "", video: "3D_results/Bull_Demon_King+head/4.mp4", model: "3D_results/Bull_Demon_King+head/4.glb", exposure: 3 },
+];
+
+var ip_custom_items = [
+    { name: "", video: "3D_IP_results/Chikorita2+Growlithe2/0.mp4", model: "3D_IP_results/Chikorita2+Growlithe2/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Chikorita2+Growlithe2/1.mp4", model: "3D_IP_results/Chikorita2+Growlithe2/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Chikorita2+Growlithe2/2.mp4", model: "3D_IP_results/Chikorita2+Growlithe2/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Chikorita2+Growlithe2/3.mp4", model: "3D_IP_results/Chikorita2+Growlithe2/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Chikorita2+Growlithe2/4.mp4", model: "3D_IP_results/Chikorita2+Growlithe2/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur1+Bulbasaur2/0.mp4", model: "3D_IP_results/Bulbasaur1+Bulbasaur2/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur1+Bulbasaur2/1.mp4", model: "3D_IP_results/Bulbasaur1+Bulbasaur2/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur1+Bulbasaur2/2.mp4", model: "3D_IP_results/Bulbasaur1+Bulbasaur2/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur1+Bulbasaur2/3.mp4", model: "3D_IP_results/Bulbasaur1+Bulbasaur2/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur1+Bulbasaur2/4.mp4", model: "3D_IP_results/Bulbasaur1+Bulbasaur2/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur2+Bulbasaur3/0.mp4", model: "3D_IP_results/Bulbasaur2+Bulbasaur3/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur2+Bulbasaur3/1.mp4", model: "3D_IP_results/Bulbasaur2+Bulbasaur3/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur2+Bulbasaur3/2.mp4", model: "3D_IP_results/Bulbasaur2+Bulbasaur3/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur2+Bulbasaur3/3.mp4", model: "3D_IP_results/Bulbasaur2+Bulbasaur3/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Bulbasaur2+Bulbasaur3/4.mp4", model: "3D_IP_results/Bulbasaur2+Bulbasaur3/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Caterpie3/0.mp4", model: "3D_IP_results/Pidgey3+Caterpie3/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Caterpie3/1.mp4", model: "3D_IP_results/Pidgey3+Caterpie3/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Caterpie3/2.mp4", model: "3D_IP_results/Pidgey3+Caterpie3/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Caterpie3/3.mp4", model: "3D_IP_results/Pidgey3+Caterpie3/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Caterpie3/4.mp4", model: "3D_IP_results/Pidgey3+Caterpie3,/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Charmander2+Squirtle2/0.mp4", model: "3D_IP_results/Charmander2+Squirtle2/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Charmander2+Squirtle2/1.mp4", model: "3D_IP_results/Charmander2+Squirtle2/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Charmander2+Squirtle2/2.mp4", model: "3D_IP_results/Charmander2+Squirtle2/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Charmander2+Squirtle2/3.mp4", model: "3D_IP_results/Charmander2+Squirtle2/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Charmander2+Squirtle2/4.mp4", model: "3D_IP_results/Charmander2+Squirtle2/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Nidoran2+Bulbasaur2/0.mp4", model: "3D_IP_results/Nidoran2+Bulbasaur2/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Nidoran2+Bulbasaur2/1.mp4", model: "3D_IP_results/Nidoran2+Bulbasaur2/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Nidoran2+Bulbasaur2/2.mp4", model: "3D_IP_results/Nidoran2+Bulbasaur2/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Nidoran2+Bulbasaur2/3.mp4", model: "3D_IP_results/Nidoran2+Bulbasaur2/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Nidoran2+Bulbasaur2/4.mp4", model: "3D_IP_results/Nidoran2+Bulbasaur2/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey1+Pidgey2/0.mp4", model: "3D_IP_results/Pidgey1+Pidgey2/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey1+Pidgey2/1.mp4", model: "3D_IP_results/Pidgey1+Pidgey2/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey1+Pidgey2/2.mp4", model: "3D_IP_results/Pidgey1+Pidgey2/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey1+Pidgey2/3.mp4", model: "3D_IP_results/Pidgey1+Pidgey2/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey1+Pidgey2/4.mp4", model: "3D_IP_results/Pidgey1+Pidgey2/4.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/0.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/1.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/2.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/3.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/4.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/4.glb", exposure: 3 },
+];
+
+var custom_items = [
+    {name: "a", video: "videos/a.mp4", model: "glbs/a.glb", exposure: 3},
+    {name: "b", video: "videos/b.mp4", model: "glbs/b.glb", exposure: 3},
+    {name: "c", video: "videos/c.mp4", model: "glbs/c.glb", exposure: 3},
+    {name: "d", video: "videos/d.mp4", model: "glbs/d.glb", exposure: 3},
+    {name: "e", video: "videos/e.mp4", model: "glbs/e.glb", exposure: 3},
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/0.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/0.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/1.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/1.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/2.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/2.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/3.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/3.glb", exposure: 3 },
+    { name: "", video: "3D_IP_results/Pidgey3+Bulbasaur3/4.mp4", model: "3D_IP_results/Pidgey3+Bulbasaur3/4.glb", exposure: 3 },
+]
+
+function custom_carousel_item_template(item) {
+    return `<div class="x-card clickable" style="min-width: 120px" onclick=\'openWindow(custom_window_template(${JSON.stringify(item)}))\'>
+                <div class="x-labels">
+                    <div class="x-label">GLB ✓</div>
+                </div>
+                <div style="width: 100%; aspect-ratio: 1">
+                    <video autoplay playsinline loop muted height="100%" src="assets/morphing/${item.video}"></video>
+                </div>
+            </div>`;
+}
+
+function custom_window_template(item) {
+    let panel = new_asset_panel_template();
+    let item_copy = JSON.parse(JSON.stringify(item));
+    item_copy.model = 'assets/morphing/' + item_copy.model;
+    return modelviewer_window_template_vertical(item_copy, panel);
+}
