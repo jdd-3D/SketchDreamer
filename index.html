@@ -1,345 +1,196 @@
-<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="SketchDreamer">
-  <meta name="keywords" content="3D Gaussian Splatting, panoramic image, 3D reconstruction">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SketchDreamer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SketchDreamer</title>
 
-  <!-- 1. 调整 Katex 加载顺序：先样式，再核心脚本，最后渲染脚本 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
-  
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-PYVRSFMDRL');
-  </script>
+    <link rel="icon" href="./static/images/icon.png">
+    <link rel="stylesheet" href="fonts/avenir-next/stylesheet.css">
+    <link rel="stylesheet" href="fonts/segoe-print/stylesheet.css">
+    <link rel="stylesheet" href="icons/style.css">
+    <link rel="stylesheet" href="css/window.css">
+    <link rel="stylesheet" href="css/carousel.css">
+    <link rel="stylesheet" href="css/selection_panel.css">
+    <link rel="stylesheet" href="css/main.css">
 
-  <!-- 字体和样式 -->
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
-  <link rel="stylesheet" href="./static/css/bulma.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css">
-  <link rel="icon" href="https://www.hit.edu.cn/_upload/article/images/d3/ec/8fcaa5d24cb59a8e9660324ef50b/735df70a-538b-4bd6-8e52-3f373085a616.png">
-	<!-- ./static/images/favicon.svg -->
+    <script src="js/window.js"></script>
+    <script src="js/carousel.js"></script>
+    <script src="js/selection_panel.js"></script>
+    <script src="js/generation.js"></script>
+    <script src="js/editing.js"></script>
+    <script src="js/application.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/custom_carousel.js"></script>
+    <script src="js/video_carousel.js"></script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
-  <!-- 脚本 -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script defer src="./static/js/fontawesome.all.min.js"></script>
-  <script src="./static/js/bulma-carousel.min.js"></script>
-  <script src="./static/js/bulma-slider.min.js"></script>
-  <script src="./static/js/index.js"></script>
-  
-  <!-- 自定义样式 -->
-  <style>
-    .img-container {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin: 20px 0;
-      justify-content: center;
-    }
-    .img-container img {
-      width: auto;
-      height: 390px;
-      object-fit: contain;
-    }
-    /* 给公式添加一个类，方便定位 */
-    .math-formula {
-      display: inline-block;
-    }
-  </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-PYVRSFMDRL');
+    </script>
 
-  <!-- 2. 增强渲染配置：提高优先级 + 手动兜底 -->
-  <script>
-    // 等待所有资源加载完成后再渲染
-    window.onload = function() {
-      // 自动渲染所有 $...$ 和 $$...$$ 公式
-      renderMathInElement(document.body, {
-        delimiters: [
-          {left: "$", right: "$", display: false},
-          {left: "$$", right: "$$", display: true}
-        ],
-        ignoreHtmlClass: "no-math",
-        throwOnError: false,
-        trust: true, // 允许渲染复杂公式
-        strict: false
-      });
+    <!-- 字体和样式 -->
+    <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+    <link rel="stylesheet" href="./static/css/bulma.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <link rel="stylesheet" href="./static/css/index.css">
+    <link rel="icon" href="https://www.hit.edu.cn/_upload/article/images/d3/ec/8fcaa5d24cb59a8e9660324ef50b/735df70a-538b-4bd6-8e52-3f373085a616.png">
 
-      // 手动渲染关键公式（兜底方案）
-      const formulas = [
-        {id: "m2dig", expr: "(\\mathcal{M}_{2DIG})"},
-        {id: "m3dgi", expr: "(\\mathcal{M}_{3DGI})"},
-        {id: "m3dgo", expr: "(\\mathcal{M}_{3DGO})"}
-      ];
-      formulas.forEach(item => {
-        const el = document.getElementById(item.id);
-        if(el) {
-          katex.render(item.expr, el, {
-            throwOnError: false,
-            displayMode: false
-          });
+    <!-- 脚本 -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+    <script src="./static/js/index.js"></script>
+
+    <style>
+        .img-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin: 20px 0;
+            justify-content: center;
         }
-      });
-    };
-  </script>
+        .img-container img {
+            width: auto;
+            height: 390px;
+            object-fit: contain;
+        }
+        /* 花体M样式，和论文LaTeX花体一致 */
+        .cal-M {
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+            font-weight: 600;
+            font-size: 1.1em;
+            vertical-align: baseline;
+        }
+        .sub-text {
+            font-size: 0.75em;
+            vertical-align: sub;
+            margin-left: 1px;
+        }
+    </style>
 </head>
+
 <body>
-
-<nav class="navbar" role="navigation" aria-label="main navigation">
-  <div class="navbar-brand">
-    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-    </a>
-  </div>
-  <div class="navbar-menu">
-    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-      <a class="navbar-item" href="https://homepage.hit.edu.cn/xiaopengfan?lang=zh">
-        <span class="icon"><i class="fas fa-home"></i></span>
-      </a>
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">More Research</a>
-        <div class="navbar-dropdown">
-          <a class="navbar-item" href="https://github.com/jdd-3D/SketchDreamer">SketchDreamer</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<section class="hero">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">SketchDreamer</h1>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block">Dongdong Jing<sup>1</sup>,</span>
-            <span class="author-block"><a href="https://homepage.hit.edu.cn/xtwang">Xingtao Wang</a><sup>1</sup>,</span>
-            <span class="author-block"><a href="https://homepage.hit.edu.cn/manhengyu?lang=zh">Hengyu Man</a><sup>1</sup>,</span>
-            <span class="author-block"><a href="https://homepage.hit.edu.cn/guyf?lang=zh">Yanfeng Gu</a><sup>1</sup>,</span> 
-            <span class="author-block"><a href="https://homepage.hit.edu.cn/xiaopengfan?lang=zh">Xiaopeng Fan</a><sup>1</sup></span> 
-          </div>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>Harbin Institute of Technology</span>
-          </div>
-          <div class="column has-text-centered">
-            <div class="publication-links">
-              <span class="link-block">
-                <a href="" class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
-                  <span>Paper</span>
-                </a>
-              </span>
-              <span class="link-block">
-                <a href="https://github.com/jdd-3D/SketchDreamer" class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon"><i class="fab fa-github"></i></span>
-                  <span>Code</span>
-                </a>
-              </span>
-              <span class="link-block">
-                <a href="https://huggingface.co/datasets/zwgd/sketch3D/tree/main" class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon"><i class="far fa-images"></i></span>
-                  <span>Data</span>
-                </a>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <img src="./static/images/A4.jpg" alt="pipeline" />
-        <br/>
-      </div>
-    </div>
-</section>
-	
-<section class="section">
-  <div class="container is-max-desktop">
-    <!-- Abstract -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <p>
-            Sketch-driven 3D generation has gained increasing attention owing to its low professional barriers and distinctive artistic expression. 
-            Its primary challenge lies in the inherent absence of style information in sketches, which has led mainstream works to incorporate textual prompts to supplement such information. 
-            However, when the expected style is not well-defined, it is difficult to formulate precise and discriminative textual descriptions, thus failing to impose sufficient constraints on stylistic details.
-            In this paper, we present a sketch-driven 3D generation framework termed SketchDreamer, which leverages a style image to define the visual appearance. 
-            With style images providing explicit customization targets, they also impose more stringent demands on extracting and embedding style information.
-            To this end, we develop a dual-domain style enhancement framework that ensures style fidelity and consistency in both 2D and 3D domains.
-            Specifically, SketchDreamer consists of three modules, namely 2D reference image generation module 
-            <span id="m2dig" class="math-formula"></span>, 3D Gaussian initialization module 
-            <span id="m3dgi" class="math-formula"></span>, and 3D Gaussian optimization module 
-            <span id="m3dgo" class="math-formula"></span>. 
-            <span id="m2dig-2" class="math-formula"></span> integrates and enhances structural and stylistic features through a dual-cascaded UNet architecture and a frequency modulation strategy, generating a high-quality stylized reference image.
-            <span id="m3dgi-2" class="math-formula"></span> transforms the reference image into a stable initial 3D Gaussian model by selecting high-quality views and removing Gaussian primitives with abnormal luminance distributions, thereby improving geometric reliability. 
-            <span id="m3dgo-2" class="math-formula"></span> performs iterative refinement of the initial Gaussian model in terms of cross-view consistency and stylistic fidelity by jointly leveraging geometric and stylistic features.
-            Extensive experiments validate that SketchDreamer consistently generates 3D assets with precise style alignment and robust cross-view consistency.
-          </p>
-        </div>
-      </div>
-		
+<div id="main">
+    <div id="title" class="x-gradient-font">
+        <span style="font-size: 80px;">SketchDreamer</span><br>
+        <span style="font-size: 43px;">Image Guided Sketch-driven 3D Generation with Dual-domain Style Enhancement</span>
     </div>
 
-    <!-- Paper pipeline -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Pipeline</h2>
-        <div style="display: flex; justify-content: center; margin: 20px 0;">
-          <img src="./static/images/A0.png" alt="pipeline" style="width: 780px; max-width: 100%;"/>
-        </div>
-        <div class="content has-text-justified">
-          <p>
-            The pipeline of SketchDreamer, which is divided into three stages. In the first stage, the 2D reference image generation module <span id="m2dig-3" class="math-formula"></span> is used to generate a high-quality stylized reference image with structural fidelity and consistent style. In the second stage, the 3D Gaussian initialization module <span id="m3dgi-3" class="math-formula"></span> is used to convert a stylized reference image into an initial 3D Gaussian model with basic geometric structure. In the third stage, the quality of 3D Gaussians is improved using the 3D Gaussian optimization module <span id="m3dgo-3" class="math-formula"></span>.
-          </p>
-			<video id="teaser" poster="" autoplay="" muted="" loop="" playsinline="" height="100%">
-              <source src="static/videos/video.mp4" type="video/mp4">
-        </video>
-        </div>
-      </div> 
-    </div>  
-  </div>
-</section>
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Experiment</h2>
-        <h3 class="title is-4">Qualitative result</h3>
-        <div class="content has-text-justified">
-          <p>
-            Qualitative comparisons between our method and Zero123 (ICCV 2023), Stable Zero123 (2023), shap-E (2023), DreamGaussian (ICLR 2024), LGM (ECCV 2024), Sketch3D (MM 2024), and Ouroboros3D (CVPR 2025). Specifically, Sketch3D-text uses text as a style prompt, while Sketch3D-image uses a style image as a style prompt. The <span style="color: blue; font-weight: bold;">blue box</span> indicates the presence of <span style="color: blue; font-weight: bold;">multi-face problem</span>, while the <span style="color: red; font-weight: bold;">red box</span> indicates the presence of <span style="color: red; font-weight: bold;">artifacts</span>.
-          </p>
-        </div>
-        <div style="display: flex; justify-content: center; margin: 20px 0;">
-          <img src="./static/images/A5.jpg" alt="pipeline" style="width: 810px;"/>
-        </div>
-        <br/>
-      </div>
+    <div id="authors">
+        <div><a class="link" href="">Dongdong Jing</a><sup>1</sup></div>
+        <div><a class="link" href="https://homepage.hit.edu.cn/xtwang">Xingtao Wang</a><sup>1*</sup></div>
+        <div><a class="link" href="https://homepage.hit.edu.cn/manhengyu?lang=zh">Hengyu Man</a><sup>1</sup></div>
+        <div><a class="link" href="https://homepage.hit.edu.cn/guyf?lang=zh">Yanfeng Gu</a><sup>1</sup></div>
+        <div><a class="link" href="https://homepage.hit.edu.cn/xiaopengfan?lang=zh">Xiaopeng Fan</a><sup>1</sup></div>
     </div>
 
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Abalation study</h2>
-        <h3 class="title is-4">Study 1: 2D Reference Image Generation Module. </h3>
-        <div style="display: flex; justify-content: center; margin: 20px 0;">
-          <img src="./static/images/A1.jpg" alt="pipeline" style="width: 810px;"/>
-        </div>
-        <br/>
-		  
-        <h3 class="title is-4">Study 2: 3D Gaussian Initialization Module. </h3>
+    <div id="institution">
+        <div><sup>1</sup><a class="link" href="https://www.hit.edu.cn/">Harbin Institute of Technology</a></div>
+    </div>
+    <div id="institution">
+        <div><sup>*</sup>Corresponding Author</div>
+    </div>
+
+    <div id="links">
+        <div><a id="paper" href="">paper</a></div>
+        <div><a id="code" href="https://github.com/jdd-3D/SketchDreamer">Code</a></div>
+    </div>
+
+    <div id="teaser">
+        <div style="width: 96%;text-align: center;"><video autoplay playsinline loop muted src="" poster="./static/images/A4.jpg"></video></div>
+    </div>
+
+    <div id="abstract" class="x-gradient-block">
+        Sketch-driven 3D generation has gained increasing attention owing to its low professional barriers and distinctive artistic expression.
+        Its primary challenge lies in the inherent absence of style information in sketches, which has led mainstream works to incorporate textual prompts to supplement such information.
+        However, when the expected style is not well-defined, it is difficult to formulate precise and discriminative textual descriptions, thus failing to impose sufficient constraints on stylistic details.
+        In this paper, we present a sketch-driven 3D generation framework termed SketchDreamer, which leverages a style image to define the visual appearance.
+        With style images providing explicit customization targets, they also impose more stringent demands on extracting and embedding style information.
+        To this end, we develop a dual-domain style enhancement framework that ensures style fidelity and consistency in both 2D and 3D domains.
+        Specifically, SketchDreamer consists of three modules, namely 2D reference image generation module
+        (<span id="m2dig" class="math-formula"><span class="cal-M">M</span><span class="sub-text">2DIG</span></span>), 3D Gaussian initialization module
+        (<span id="m3dgi" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGI</span></span>), and 3D Gaussian optimization module
+        (<span id="m3dgo" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGO</span></span>).
+        <span id="m2dig-2" class="math-formula"><span class="cal-M">M</span><span class="sub-text">2DIG</span></span> integrates and enhances structural and stylistic features through a dual-cascaded UNet architecture and a frequency modulation strategy, generating a high-quality stylized reference image.
+        <span id="m3dgi-2" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGI</span></span> transforms the reference image into a stable initial 3D Gaussian model by selecting high-quality views and removing Gaussian primitives with abnormal luminance distributions, thereby improving geometric reliability.
+        <span id="m3dgo-2" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGO</span></span> performs iterative refinement of the initial Gaussian model in terms of cross-view consistency and stylistic fidelity by jointly leveraging geometric and stylistic features.
+        Extensive experiments validate that SketchDreamer consistently generates 3D assets with precise style alignment and robust cross-view consistency.
+    </div>
+
+    <div class="x-section-title"><div class="x-gradient-font">Methodology</div></div>
+    <p style="text-align: center;">
+        <img src="./static/images/A0.png" alt="Pipeline" style="width: 92%;">
+    </p>
+    <p>
+        <b>The pipeline of SketchDreamer</b>, which is divided into three stages. <b>In the first stage</b>, the 2D reference image generation module (<span id="m2dig-3" class="math-formula"><span class="cal-M">M</span><span class="sub-text">2DIG</span></span>) is used to generate a high-quality stylized reference image with structural fidelity and consistent style. <b>In the second stage</b>, the 3D Gaussian initialization module (<span id="m3dgi-3" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGI</span></span>) is used to convert a stylized reference image into an initial 3D Gaussian model with basic geometric structure. <b>In the third stage</b>, the quality of 3D Gaussians is improved using the 3D Gaussian optimization module (<span id="m3dgo-3" class="math-formula"><span class="cal-M">M</span><span class="sub-text">3DGO</span></span>).
+    </p>
+
+    <div class="x-section-title"><div class="x-gradient-font">Qualitative Result</div></div>
+    <div id="video-carousel-Pocket-Monsters" style="margin-top: 20px;"></div>
+    <p>
+        Qualitative comparisons between our method and Zero123 (ICCV 2023), Stable Zero123 (2023), shap-E (2023), DreamGaussian (ICLR 2024), LGM (ECCV 2024), Sketch3D (MM 2024), and Ouroboros3D (CVPR 2025). Specifically, Sketch3D-text uses text as a style prompt, while Sketch3D-image uses a style image as a style prompt. The <span style="color: blue; font-weight: bold;">blue box</span> indicates the presence of <span style="color: blue; font-weight: bold;">multi-face problem</span>, while the <span style="color: red; font-weight: bold;">red box</span> indicates the presence of <span style="color: red; font-weight: bold;">artifacts</span>.
+    </p>
+    <p style="text-align: center;">
+        <img src="./static/images/A5.jpg" style="width: 90%;">
+    </p>
+
+    <div class="x-section-title"><div class="x-gradient-font">Ablation Study | 2D Reference Image Generation Module</div></div>
+    <div id="video-carousel-ablation" style="margin-top: 20px;"></div>
+    <p>
         <div class="img-container">
-          <img src="./static/images/A2.jpg" alt="pipeline" />
-          <img src="./static/images/A3.jpg" alt="pipeline" />
+            <img src="./static/images/A1.jpg" style="width: 85%;">
         </div>
-        <br/>
+    </p>
 
-        <h3 class="title is-4">Study 3: 3D Gaussian Optimization Module. </h3>
-        <div style="display: flex; justify-content: center; margin: 20px 0;">
-          <img src="./static/images/A6.jpg" alt="pipeline" style="width: 810px;"/>
+    <div class="x-section-title"><div class="x-gradient-font">Ablation Study | 3D Gaussian Initialization Module</div></div>
+    <p>
+        <div class="img-container">
+            <img src="./static/images/A2.jpg" style="width: 100%;">
+            <img src="./static/images/A3.jpg" style="width: 100%;">
         </div>
-        <br/>
+    </p>
 
-        <h3 class="title is-4">Study 4: Hand-drawn sketch. </h3>
-        <div style="display: flex; justify-content: center; margin: 20px 0;">
-          <img src="./static/images/A7.jpg" alt="pipeline" style="width: 390px;"/>
+    <div class="x-section-title"><div class="x-gradient-font">Ablation Study | 3D Gaussian Optimization Module</div></div>
+    <p>
+        <div class="img-container">
+            <img src="./static/images/A6.jpg" style="width: 100%;">
         </div>
-        <br/>
-      </div>
-    </div>
-  </div>
-</section>
+    </p>
 
-<section class="section" id="BibTeX">
-  <div class="container is-max-desktop content">
-    <h2 class="title">BibTeX</h2>
-    <pre><code>@article{,
+    <div class="x-section-title"><div class="x-gradient-font">360-Degree Rotation</div></div>
+    <p style="text-align: center;">
+        <video controls playsinline loop muted autoplay style="max-width: 92%; max-height: 500px;" src="static/videos/video.mp4"></video>
+    </p>
+
+    <div class="x-section-title"><div class="x-gradient-font">Hand-Drawn Sketch</div></div>
+    <p>
+        <div class="img-container">
+            <img src="./static/images/A7.jpg" style="width: 100%;">
+        </div>
+    </p>
+
+    <div class="x-section-title"><div class="x-gradient-font">Citation</div></div>
+    <p>
+        If you find our work useful, please consider citing:
+    </p>
+    <p class="bibtex x-gradient-block">
+@article{,
   author    = {Dongdong Jing, Xingtao Wang, Hengyu Man, Yanfeng Gu, Xiaopeng Fan},
   title     = {SketchDreamer: Image Guided Sketch-driven 3D Generation with Dual-domain Style Enhancement},
   journal   = {},
   year      = {2025},
-}</code></pre>
-  </div>
-</section>
-
-<footer class="footer">
-  <div class="container">
-    <div class="content has-text-centered">
-      <a class="icon-link" href="https://github.com/jdd-3D/SketchDreamer"> 
-		  <!-- ./static/videos/nerfies_paper.pdf -->
-        <i class="fas fa-file-pdf"></i>
-      </a>
-      <a class="icon-link" href="https://github.com/jdd-3D/SketchDreamer" class="external-link" disabled>
-        <i class="fab fa-github"></i>
-      </a>
-    </div>
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
-          <p>
-            This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p>
-          <!-- <p>
-            The <a href="https://github.com/nerfies/nerfies.github.io">source code</a> for the website was taken from Nerfies. 
-            We appreciate the authors sharing the templates.
-          </p> -->
-        </div>
-      </div>
-    </div>
-  </div>
-</footer>
-
-<!-- 3. 补充所有重复公式的手动渲染 -->
-<script>
-  // 页面加载完成后，渲染所有重复的公式
-  window.onload = function() {
-    // 先执行全局自动渲染
-    renderMathInElement(document.body, {
-      delimiters: [{left: "$", right: "$", display: false}, {left: "$$", right: "$$", display: true}],
-      throwOnError: false
-    });
-
-    // 手动渲染所有带 ID 的公式节点
-    const allFormulas = [
-      {id: "m2dig", expr: "(\\mathcal{M}_{2DIG})"},
-      {id: "m3dgi", expr: "(\\mathcal{M}_{3DGI})"},
-      {id: "m3dgo", expr: "(\\mathcal{M}_{3DGO})"},
-      {id: "m2dig-2", expr: "\\mathcal{M}_{2DIG}"},
-      {id: "m3dgi-2", expr: "\\mathcal{M}_{3DGI}"},
-      {id: "m3dgo-2", expr: "\\mathcal{M}_{3DGO}"},
-      {id: "m2dig-3", expr: "(\\mathcal{M}_{2DIG})"},
-      {id: "m3dgi-3", expr: "(\\mathcal{M}_{3DGI})"},
-      {id: "m3dgo-3", expr: "(\\mathcal{M}_{3DGO})"}
-    ];
-
-    allFormulas.forEach(item => {
-      const el = document.getElementById(item.id);
-      if(el) {
-        katex.render(item.expr, el, {throwOnError: false, displayMode: false});
-      }
-    });
-  };
-</script>
-
+}
+    </p>
+</div>
 </body>
 </html>
