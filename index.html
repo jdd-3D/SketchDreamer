@@ -62,6 +62,16 @@
             height: 390px;
             object-fit: contain;
         }
+        .img-container.stacked-images {
+            flex-direction: column;
+            gap: 0;
+        }
+        .img-container img.large-portrait {
+            width: auto;
+            height: 900px;
+            max-width: 100%;
+            flex-shrink: 0;
+        }
         /* 花体M样式，和论文LaTeX花体一致 */
         .cal-M {
             font-family: "Times New Roman", serif;
@@ -147,15 +157,15 @@
     <div id="video-carousel-ablation" style="margin-top: 20px;"></div>
     <p>
         <div class="img-container">
-            <img src="./static/images/A1.jpg" style="width: 85%;">
+            <img src="./static/images/A1.jpg" style="width: 90%;">
         </div>
     </p>
 
     <div class="x-section-title"><div class="x-gradient-font">Ablation Study | 3D Gaussian Initialization Module</div></div>
     <p>
-        <div class="img-container">
-            <img src="./static/images/A2.jpg" style="width: 100%;">
-            <img src="./static/images/A3.jpg" style="width: 100%;">
+        <div class="img-container stacked-images">
+            <img src="./static/images/A17.jpg" style="width: 90%;">
+            <img src="./static/images/A18.jpg" style="width: 90%;">
         </div>
     </p>
 
@@ -166,18 +176,27 @@
         </div>
     </p>
 
-    <div class="x-section-title"><div class="x-gradient-font">360-Degree Rotation</div></div>
+    <!-- <div class="x-section-title"><div class="x-gradient-font">360-Degree Rotation</div></div>
     <p style="text-align: center;">
         <video controls playsinline loop muted autoplay style="max-width: 92%; max-height: 500px;" src="static/videos/video.mp4"></video>
+    </p> -->
+
+    <div class="x-section-title"><div class="x-gradient-font">Hand-drawn Sketches and Style Diversity</div></div>
+    <p>
+        <div class="img-container">
+            <img class="large-portrait" src="./static/images/A16.jpg">
+        </div>
     </p>
 
     <div class="x-section-title"><div class="x-gradient-font">Hand-Drawn Sketch</div></div>
     <p>
         <div class="img-container">
-            <img src="./static/images/A9.jpg" style="width: 150%;">
+            <img src="./static/images/A9.jpg" style="width: 200%;">
             <!-- <img src="./static/images/A8.jpg" style="width: 120%;"> -->
         </div>
     </p>
+
+
 
     <div class="x-section-title"><div class="x-gradient-font">Citation</div></div>
     <p>
