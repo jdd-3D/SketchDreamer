@@ -1,4 +1,4 @@
-# SketchDreamer: Image Guided Sketch-driven 3D Generation with Dual-domain Style Enhancement ####
+# SketchDreamer
 
 [![webpage](https://img.shields.io/badge/🌐-Website%20-blue.svg)](https://jdd-3d.github.io/SketchDreamer/) 
 
