@@ -1,4 +1,4 @@
-# DreamGaussian
+# SketchDreamer
 
 ### [Project Page](https://dreamgaussian.github.io) 
 
@@ -20,11 +20,6 @@ pip install git+https://github.com/NVlabs/nvdiffrast/
 # kiuikit
 pip install git+https://github.com/ashawkey/kiuikit
 
-# To use MVdream, also install:
-pip install git+https://github.com/bytedance/MVDream
-
-# To use ImageDream, also install:
-pip install git+https://github.com/bytedance/ImageDream/#subdirectory=extern/ImageDream
 ```
 
 Tested on:
