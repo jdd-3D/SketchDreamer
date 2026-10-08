@@ -4,7 +4,6 @@
 [![webpage](https://img.shields.io/badge/🌐-Website%20-blue.svg)](https://jdd-3d.github.io/SketchDreamer/) 
 
 ---
-
 ## Installation
 
 > [!NOTE]
@@ -49,5 +48,4 @@ pip install git+https://github.com/ashawkey/kiuikit
 | :--- | :---: | :---: | :--- |
 | Ubuntu 22 | 1.12 | 11.6 | NVIDIA V100 |
 | Windows 10 | 2.1 | 12.1 | NVIDIA RTX 4090 |
-
 ---
