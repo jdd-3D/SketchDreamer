@@ -626,54 +626,7 @@ class GaussianModel:
         self.y_min = self._xyz.min(dim=0).values[1] # y
 
 
-        # self.x_max = 0.5
-        # self.y_max = 0.5
-        # self.x_min = -0.5
-        # self.y_min = -0.5
-        # # print(self._xyz.max(dim=0).values[0])
-        # # print(self._xyz.shape)
-        # x_max = self._xyz[:, 0] > self.x_max 
-        # x_min = self._xyz[:, 0] < self.x_min 
-        # x_mask = torch.logical_or(x_max,x_min)
   
-        # y_max = self._xyz[:, 1] > self.y_max
-        # y_min = self._xyz[:, 1] < self.y_min 
-        # y_mask = torch.logical_or(y_max,y_min)
-        # prune_mask = torch.logical_or(x_mask,y_mask)
-        # # print(prune_mask)
-        
-
-        # self.prune_points(prune_mask)
-        # # torch.cuda.empty_cache()
-    
-    # def statistical_filtering(data, k=1):
-    #     # 计算数据的均值
-    #     print(data.shape)
-    #     mean = torch.mean(data, dim=0)
-    #     # print(mean)
-    #     # 计算数据的标准差
-    #     std = torch.std(data, dim=0)
-    #     # print(std)
-    #     # 过滤掉偏离均值超过 k 倍标准差的数据点
-    #     filtered_data = torch.all(torch.abs(data - mean) <= k * std, dim=1)
-    #     return filtered_data
-
-
-    # def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size, step=0):
-    #     grads = self.xyz_gradient_accum / self.denom
-    #     grads[grads.isnan()] = 0.0
-
-    #     self.densify_and_clone(grads, max_grad, extent)
-    #     self.densify_and_split(grads, max_grad, extent)
-
-    #     prune_mask = (self.get_opacity < min_opacity).squeeze()
-    #     if max_screen_size:
-    #         big_points_vs = self.max_radii2D > max_screen_size
-    #         big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
-    #         prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-    #     self.prune_points(prune_mask)
-
-    #     torch.cuda.empty_cache()
     
     
     def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size, step=0):
@@ -689,34 +642,11 @@ class GaussianModel:
         if max_screen_size:
             big_points_vs = self.max_radii2D > max_screen_size
             big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
-            # mean = torch.mean(self._xyz, dim=0)
-            # std = torch.std(self._xyz, dim=0) # self._xyz  torch.Size([9328, 3])
-            # filtered_data = torch.all(torch.abs(self._xyz - mean) <= k * std, dim=1)
-            # print(self._features_dc.shape)
-            # self._features_dc[:, 0]
-            # if self._features_dc.shape[2] >= 3:
-            # # 假设 RGB 颜色信息在 f_dc 的前三个通道
-            # r = self._features_dc[:,:,0]
-            # print(self._features_dc[:,:,0]>0)
-            # print(self._features_dc[:,:,1]>0)
-            # print(self._features_dc[:,:,2]>0)
-            
-            # g = f_dc[:, 1]
-            # b = f_dc[:, 2]
-            # # 使用加权平均法计算明度
-        
-            # luminance = 0.299 * self._features_dc[:,:,0] + 0.587 * self._features_dc[:, :,1] + 0.114 * self._features_dc[:,:, 2]  >1.9 #1.3  #1.68
-            # print(self._features_dc.shape) torch.Size([1376, 1, 3])
-            # print(self._features_dc[:,:,0].max(),self._features_dc[:,:,0].min())
-            # print(self._features_dc[:,:,1].max(),self._features_dc[:,:,1].min())
-            # print(self._features_dc[:,:,2].max(),self._features_dc[:,:,2].min())
-            if step > 800: #200
+          
+            if step > 200: 
                 luminance = torch.amax(self._features_dc[:,:,:3], dim=2)
-                print(luminance.max(),luminance.min())
-                print(luminance.mean() + 3 * luminance.std(),luminance.mean() - 3 * luminance.std())
-                # luminance = luminance > (luminance.mean() + 2.5 * luminance.std())
                 luminance_r = luminance > (luminance.mean() + 3 * luminance.std())
-                luminance_l = luminance < (luminance.mean() - 3 * luminance.std()) #改这个 3.5 、300开始
+                luminance_l = luminance < (luminance.mean() - 3 * luminance.std()) 
                 luminance = torch.logical_or(luminance_l,luminance_r)
 
                 prune_mask = torch.logical_or(torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws), luminance.squeeze(1))
@@ -726,7 +656,7 @@ class GaussianModel:
                 # luminance = luminance < (luminance.mean() - 3 * luminance.std())
                 # prune_mask = torch.logical_or(torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws), luminance.squeeze(1))
                 prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-        # print(prune_mask.shape)
+   
         self.prune_points(prune_mask)
 
         torch.cuda.empty_cache()
@@ -739,11 +669,9 @@ class GaussianModel:
         if max_screen_size:
             big_points_vs = self.max_radii2D > max_screen_size
             big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
-            # luminance = 0.299 * self._features_dc[:,:,0] + 0.587 * self._features_dc[:, :,1] + 0.114 * self._features_dc[:,:, 2] > 1.2
+          
             prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-            # distance = torch.norm(self._xyz, dim=1) # torch.sqrt(self._xyz[:, 0]**2+self._xyz[:, 1]**2+self._xyz[:, 2]**2)            
-            # distance = distance > (distance.max()*0.85)
-            # prune_mask = torch.logical_or(torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws),distance)
+           
         self.prune_points(prune_mask)
 
         torch.cuda.empty_cache()

@@ -2,14 +2,14 @@
 # input rgba image path (default to None, can be load in GUI too)
 input: 
 # input text prompt (default to None, can be input in GUI too)
-prompt:
-negative_prompt:
+prompt: ""
+negative_prompt: ""
 # input mesh for stage 2 (auto-search from stage 1 output path if None)
 mesh:
 # estimated elevation angle for input image 
 elevation: 0
 # reference image resolution
-ref_size: 512
+ref_size: 256
 # density thresh for mesh extraction
 density_thresh: 1
 
@@ -33,7 +33,7 @@ warmup_rgb_loss: True
 # training batch size per iter
 batch_size: 1
 # training iterations for stage 1
-iters: 200
+iters: 500
 # whether to linearly anneal timestep
 anneal_timestep: True
 # training iterations for stage 2
@@ -47,11 +47,11 @@ min_ver: -30
 # training camera max elevation
 max_ver: 30
 # checkpoint to load for stage 1 (should be a ply file)
-load: "logs/ham725_model.ply"
-# whether allow geom training in stage 2   dr/logs/lamp723_model.ply
+load:
+# whether allow geom training in stage 2
 train_geo: False
 # prob to invert background color during training (0 = always black, 1 = always white)
-invert_bg_prob: 0.
+invert_bg_prob: 0.5
 
 
 ### GUI
@@ -59,56 +59,28 @@ gui: False
 force_cuda_rast: False
 # GUI resolution
 H: 800
-W: 800 
-#768
+W: 800
 
-# ## Gaussian splatting
-# num_pts: 5000
-# sh_degree: 0
-# position_lr_init: 0.001
-# position_lr_final: 0.00002
-# position_lr_delay_mult: 0.02
-# position_lr_max_steps: 500
-# feature_lr: 0.01
-# opacity_lr: 0.05
-# scaling_lr: 0.005
-# rotation_lr: 0.005
-# percent_dense: 0.01
-# density_start_iter: 100
-# density_end_iter: 3000
-# densification_interval: 100
-# opacity_reset_interval: 700
-# densify_grad_threshold: 0.01
-
-
-
+### Gaussian splatting
 num_pts: 5000
 sh_degree: 0
-position_lr_init: 0.0001
-position_lr_final: 0.00005
-position_lr_delay_mult: 0.5
-position_lr_max_steps: 30_000
-feature_lr: 0.025
+position_lr_init: 0.001
+position_lr_final: 0.00002
+position_lr_delay_mult: 0.02
+position_lr_max_steps: 500
+feature_lr: 0.01
 opacity_lr: 0.05
 scaling_lr: 0.005
-rotation_lr: 0.001
+rotation_lr: 0.005
 percent_dense: 0.01
+#0.01
+density_start_iter: 100
+density_end_iter: 3000
 densification_interval: 100
-opacity_reset_interval: 700  
-# densify_from_iter: 500
-# densify_until_iter: 15_000
-densify_grad_threshold: 0.0002
-
-
-
-density_start_iter: 700
-density_end_iter: 30000
-densify_interval: 100
-
-
-
+opacity_reset_interval: 700
+densify_grad_threshold: 0.01
 
 
 ### Textured Mesh
 geom_lr: 0.0001
-texture_lr: 0.2
+texture_lr: 0.1

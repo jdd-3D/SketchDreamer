@@ -8,19 +8,56 @@ import dearpygui.dearpygui as dpg
 import torch
 import torch.nn.functional as F
 
-import trimesh
 import rembg
 
 from cam_utils import orbit_camera, OrbitCamera
-from mesh_renderer import Renderer
+from gs_renderer import Renderer, MiniCam
+
+from grid_put import mipmap_linear_grid_put_2d
+from mesh import Mesh, safe_normalize
+
 
 
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
-# from MV.scripts.inference_i2mv_sdxl import main as MV
+# from edge import main1 as get_edge1
+from edge import main2 as get_edge
+import math
+from Restormer.demo1 import main as get_deblur
+import random
+from controlnet_aux import MidasDetector, ZoeDetector, NormalBaeDetector
 
-# from kiui.lpips import LPIPS
+
+
+
+
+# is_executing = False
+def should_execute(part,step):
+    ceil_step_div_100 = math.ceil(step / 100)
+    threshold = part * ceil_step_div_100
+    return step >= threshold and (step % threshold) * 0.1 <= ceil_step_div_100
+
+
+def image_entropy(image_tensor):
+    assert image_tensor.dim() == 3, 
+    channels = image_tensor.shape[0]
+    entropy_sum = 0
+    for channel in range(channels):
+       
+        channel_data = image_tensor[channel].detach().cpu().numpy()
+
+        histogram = torch.histc(torch.from_numpy(channel_data.flatten()), bins=256, min=0, max=255).numpy()
+   
+        probabilities = histogram / float(channel_data.size)
+  
+        probabilities = probabilities[probabilities > 0]
+  
+        channel_entropy = -torch.sum(torch.from_numpy(probabilities) * torch.log2(torch.from_numpy(probabilities)))
+        entropy_sum += channel_entropy.item()
+    return entropy_sum / channels
+
+
 
 
 class GUI:
@@ -48,34 +85,27 @@ class GUI:
         self.enable_zero123 = False
 
         # renderer
-        self.renderer = Renderer(opt).to(self.device)
-
-  
+        self.renderer = Renderer(sh_degree=self.opt.sh_degree)
+        self.gaussain_scale_factor = 1
 
         # input image
         self.input_img = None
         self.input_mask = None
         self.input_img_torch = None
         self.input_mask_torch = None
+        self.overlay_input_img = False
+        self.overlay_input_img_ratio = 0.5
+
 
         self.input_img_back = None
         self.input_mask_back = None
         self.input_img_back_torch = None
         self.input_mask_back_torch = None
 
-        self.input_img_left = None
-        self.input_mask_left = None
-        self.input_img_left_torch = None
-        self.input_mask_left_torch = None
 
-        self.input_img_Right = None
-        self.input_mask_Right = None
-        self.input_img_Right_torch = None
-        self.input_mask_Right_torch = None
 
-        self.overlay_input_img = False
-        self.overlay_input_img_ratio = 0.5
-        self.back_images  = None
+        self.multi_imgs = None
+        self.multi_masks = None
 
         # input text
         self.prompt = ""
@@ -86,7 +116,7 @@ class GUI:
         self.optimizer = None
         self.step = 0
         self.train_steps = 1  # steps per rendering loop
-        # self.lpips_loss = LPIPS(net='vgg').to(self.device)
+        # print("****")
         
         # load input data from cmdline
         if self.opt.input is not None:
@@ -97,7 +127,18 @@ class GUI:
             self.prompt = self.opt.prompt
         if self.opt.negative_prompt is not None:
             self.negative_prompt = self.opt.negative_prompt
-        
+
+        # override if provide a checkpoint
+        if self.opt.load is not None:
+            # print(1)
+            self.renderer.initialize(self.opt.load)            
+        else:
+            # print(2)
+            # initialize gaussians to a blob
+
+            self.renderer.initialize(num_pts=self.opt.num_pts)
+            # self.renderer.initialize(input=1)
+
         if self.gui:
             dpg.create_context()
             self.register_dpg()
@@ -127,7 +168,10 @@ class GUI:
         self.step = 0
 
         # setup training
-        self.optimizer = torch.optim.Adam(self.renderer.get_params())
+        self.renderer.gaussians.training_setup(self.opt)
+        # do not do progressive sh-level
+        self.renderer.gaussians.active_sh_degree = self.renderer.gaussians.max_sh_degree
+        self.optimizer = self.renderer.gaussians.optimizer
 
         # default camera
         if self.opt.mvdream or self.opt.imagedream:
@@ -135,9 +179,15 @@ class GUI:
             pose = orbit_camera(self.opt.elevation, 90, self.opt.radius)
         else:
             pose = orbit_camera(self.opt.elevation, 0, self.opt.radius)
-
-        self.fixed_cam = (pose, self.cam.perspective)
-        
+        self.fixed_cam = MiniCam(
+            pose,
+            self.opt.ref_size,
+            self.opt.ref_size,
+            self.cam.fovy,
+            self.cam.fovx,
+            self.cam.near,
+            self.cam.far,
+        )
 
         self.enable_sd = self.opt.lambda_sd > 0 and self.prompt != ""
         self.enable_zero123 = self.opt.lambda_zero123 > 0 and self.input_img is not None
@@ -163,57 +213,38 @@ class GUI:
         if self.guidance_zero123 is None and self.enable_zero123:
             print(f"[INFO] loading zero123...")
             from guidance.zero123_utils import Zero123
-            if self.opt.stable_zero123:
-                self.guidance_zero123 = Zero123(self.device, model_key='/root/autodl-tmp/models--ashawkey--stable-zero123-diffusers/snapshots/a6c09344fbd45843d35f2095c203c4a8e55b4dbb')
-            else:
-                self.guidance_zero123 = Zero123(self.device, model_key='/root/autodl-tmp/models--ashawkey--zero123-xl-diffusers/snapshots/10e9e8e75adaa3bf77f5ac9c381419016fed68c7')
-            print(f"[INFO] loaded zero123!")
+            if self.opt.stable_zero123: #
+                #ashawkey/stable-zero123-diffusers
+                self.guidance_zero123 = Zero123(self.device, model_key='ashawkey/stable-zero123-diffusers')
+                print(f"[INFO] loaded stable_zero123!")
+            else:  
+                self.guidance_zero123 = Zero123(self.device, model_key='ashawkey/zero123-xl-diffusers')
+                print(f"[INFO] loaded zero123!")
+        
+
         # input image
         if self.input_img is not None:
             self.input_img_torch = torch.from_numpy(self.input_img).permute(2, 0, 1).unsqueeze(0).to(self.device)
             self.input_img_torch = F.interpolate(self.input_img_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
-            # print(self.input_img_torch.shape)
-            # loss_MSE, loss_p, refine_img = self.guidance_zero123.refine2(self.input_img_torch.squeeze(0))
-            # print(refine_img.shape) 
+            input = self.input_img_torch
+
+            self.fuse,self.average = get_edge(input)
+            transform = transforms.ToPILImage()
+            transform(self.average).save("edge_pic/input_edge.png")
+            
+            self.average = torch.FloatTensor(self.average).to(self.device)
+            # print(self.average.shape)
 
             self.input_mask_torch = torch.from_numpy(self.input_mask).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_mask_torch = F.interpolate(self.input_mask_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False).squeeze(0,1)
-            self.input_img_torch_channel_last = self.input_img_torch[0].permute(1,2,0).contiguous()
+            self.input_mask_torch = F.interpolate(self.input_mask_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
 
 
-        if self.input_img_back is not None:
+
             self.input_img_back_torch = torch.from_numpy(self.input_img_back).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_img_back_torch = F.interpolate(self.input_img_back_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
-            # print(self.input_img_back_torch.shape)
-            # loss_MSE, loss_p, refine_img = self.guidance_zero123.refine2(self.input_img_back_torch.squeeze(0))
-            # print(refine_img.shape) 
-
+            self.input_img_back_torch = F.interpolate(self.input_img_back_torch, (256, 256), mode="bilinear", align_corners=False)
+  
             self.input_mask_back_torch = torch.from_numpy(self.input_mask_back).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_mask_back_torch = F.interpolate(self.input_mask_back_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False).squeeze(0,1)
-            self.input_img_back_torch_channel_last = self.input_img_back_torch[0].permute(1,2,0).contiguous()
-        # left
-        if self.input_img_left is not None:
-            self.input_img_left_torch = torch.from_numpy(self.input_img_left).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_img_left_torch = F.interpolate(self.input_img_left_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
-            # print(self.input_img_left_torch.shape)
-            # loss_MSE, loss_p, refine_img = self.guidance_zero123.refine2(self.input_img_left_torch.squeeze(0))
-            # print(refine_img.shape) 
-
-            self.input_mask_left_torch = torch.from_numpy(self.input_mask_left).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_mask_left_torch = F.interpolate(self.input_mask_left_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False).squeeze(0,1)
-            self.input_img_left_torch_channel_last = self.input_img_left_torch[0].permute(1,2,0).contiguous()
-        
-        # right
-        if self.input_img_Right is not None:
-            self.input_img_Right_torch = torch.from_numpy(self.input_img_Right).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_img_Right_torch = F.interpolate(self.input_img_Right_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
-            # print(self.input_img_Right_torch.shape)
-            # loss_MSE, loss_p, refine_img = self.guidance_zero123.refine2(self.input_img_Right_torch.squeeze(0))
-            # print(refine_img.shape) 
-
-            self.input_mask_Right_torch = torch.from_numpy(self.input_mask_Right).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_mask_Right_torch = F.interpolate(self.input_mask_Right_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False).squeeze(0,1)
-            self.input_img_Right_torch_channel_last = self.input_img_Right_torch[0].permute(1,2,0).contiguous()
+            self.input_mask_back_torch = F.interpolate(self.input_mask_back_torch, (256, 256), mode="bilinear", align_corners=False)
 
         # prepare embeddings
         with torch.no_grad():
@@ -231,325 +262,56 @@ class GUI:
         starter = torch.cuda.Event(enable_timing=True)
         ender = torch.cuda.Event(enable_timing=True)
         starter.record()
-
+        # print(self.input_img_torch.shape)
+        
 
         for _ in range(self.train_steps):
 
             self.step += 1
-            step_ratio = min(1, self.step / self.opt.iters_refine)
+            step_ratio = min(1, self.step / self.opt.iters) 
+
+            # update lr
+            self.renderer.gaussians.update_learning_rate(self.step)
 
             loss = 0
-            strength = 0.8 + step_ratio * 0.15 
+            
 
             ### known view
-            if self.input_img_torch is not None and not self.opt.imagedream:   
-                ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-                out = self.renderer.render(*self.fixed_cam, self.opt.ref_size, self.opt.ref_size, ssaa=ssaa)
-                image = out["image"]
-                # # rgb loss
-                 # [H, W, 3] in [0, 1]
-                valid_mask = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-                loss = loss + 10*F.mse_loss(image * valid_mask, self.input_img_torch_channel_last * valid_mask)
+            if self.input_img_torch is not None and not self.opt.imagedream:
+                cur_cam = self.fixed_cam
+                out = self.renderer.render(cur_cam)
 
-                muilt_views = []
-
-#  #front
-#                 vers, hors, radii,edge_images,valid_mask2s,real_renders = [], [], [], [],[],[]
-        
-#                 ver = 0
-#                 hor = 0
-#                 radius = 0
-
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-#                 render_resolution = 512
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0)  # [H, W, 3] in [0, 1]
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-                
-#                 transform = transforms.ToPILImage()
-#                 # alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # # edge_images.append(alpha)
-#                 # depth = transform(out['depth'].permute(2, 0, 1))
-#                 # # edge_images.append(depth)
-#                 # normal = transform(out['normal'].permute(2, 0, 1))
-#                 # # edge_images.append(normal)
-#                 # viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-#                 # muilt_views.append(image)  
-
-        
-#                 # if self.enable_zero123 and self.step %10 == 0:
-#                 #     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                 #     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                 #     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                 #     valid_mask2s.append(valid_mask2)
-#                 #     real_renders.append(image.squeeze(0))
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-               
-#                 image1 = transform(image.squeeze(0))
-           
-#                 image1.save("0/"+str(self.step)+".png") 
-
-
-
-# #left
-#                 vers, hors, radii = [], [], []
-#                 ver = 0
-#                 hor = 90
-#                 radius = 0
-
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-#                 # render_resolution = 256
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0) # torch.Size([1, 3, 512, 512])
-#                 muilt_views.append(image)
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-                
-#                 transform = transforms.ToPILImage()
-#                 alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # edge_images.append(alpha)
-#                 depth = transform(out['depth'].permute(2, 0, 1))
-#                 # edge_images.append(depth)
-#                 normal = transform(out['normal'].permute(2, 0, 1))
-#                 # edge_images.append(normal)
-#                 viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-
-        
-#                 if self.enable_zero123 and self.step %10 == 0:
-#                     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                     valid_mask2s.append(valid_mask2)
-#                     real_renders.append(image.squeeze(0))
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-            
-               
-#                 image1 = transform(image.squeeze(0))         
-#                 image1.save("90/"+str(self.step)+".png") 
-
-
-#                 vers, hors, radii = [], [], []
-#                 ver = 0
-#                 hor = 45
-#                 radius = 0
-
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-#                 # render_resolution = 256
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0) # torch.Size([1, 3, 512, 512])
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-#                 muilt_views.append(image)
-
-#                 alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # edge_images.append(alpha)
-#                 depth = transform(out['depth'].permute(2, 0, 1))
-#                 # edge_images.append(depth)
-#                 normal = transform(out['normal'].permute(2, 0, 1))
-#                 # edge_images.append(normal)
-#                 viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-
-#                 if self.enable_zero123 and self.step %10 == 0:
-#                     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                     valid_mask2s.append(valid_mask2)
-#                     real_renders.append(image.squeeze(0))
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-
-
-
-
-
-                
-# #back
-#                 vers, hors, radii = [], [], []
-#                 ver = 0
-#                 hor = 180
-#                 radius = 0
-
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-                
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0) # torch.Size([1, 3, 512, 512])
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-#                 muilt_views.append(image)
-                
-         
-#                 alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # edge_images.append(alpha)
-#                 depth = transform(out['depth'].permute(2, 0, 1))
-#                 # edge_images.append(depth)
-#                 normal = transform(out['normal'].permute(2, 0, 1))
-#                 # edge_images.append(normal)
-#                 viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-
-
-#                 if self.enable_zero123 and self.step %10 == 0:
-#                     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-#                     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                     valid_mask2s.append(valid_mask2)
-#                     real_renders.append(image.squeeze(0))
-
-               
-#                 transform = transforms.ToPILImage()
-#                 image1 = transform(image.squeeze(0))
-#                 image1.save("180/000000.png")
-#                 # image1.save("180/"+str(self.step)+".png")
-
-                
+                # rgb loss
+                image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                loss = loss + 10000 * (step_ratio if self.opt.warmup_rgb_loss else 1) * F.mse_loss(image, self.input_img_torch)
                 
 
-                        
-# #right
-#                 vers, hors, radii = [], [], []
-#                 ver = 0
-#                 hor = -90
-#                 radius = 0
+                # mask loss
+                mask = out["alpha"].unsqueeze(0) # [1, 1, H, W] in [0, 1]
+                loss = loss + 1000 * (step_ratio if self.opt.warmup_rgb_loss else 1) * F.mse_loss(mask, self.input_mask_torch)
 
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-#                 # render_resolution = 256
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0) # torch.Size([1, 3, 512, 512])
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-#                 # muilt_views.append(image)
-
-#                 alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # edge_images.append(alpha)
-#                 depth = transform(out['depth'].permute(2, 0, 1))
-#                 # edge_images.append(depth)
-#                 normal = transform(out['normal'].permute(2, 0, 1))
-#                 # edge_images.append(normal)
-#                 viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-
-#                 if self.enable_zero123 and self.step %10 == 0:
-#                     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-          
-#                     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                     valid_mask2s.append(valid_mask2)
-#                     real_renders.append(image.squeeze(0))
-
-#                 transform = transforms.ToPILImage()
-#                 image1 = transform(image.squeeze(0))
-#                 image1.save("-90/"+str(self.step)+".png")
-
-
-#                 vers, hors, radii = [], [], []
-#                 ver = 0
-#                 hor = -45
-#                 radius = 0
-
-#                 vers.append(ver)
-#                 hors.append(hor)
-#                 radii.append(radius)
-
-#                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
-
-#                 # random render resolution
-#                 ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-#                 # render_resolution = 256
-#                 out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
-
-#                 image = out["image"].permute(2, 0, 1).unsqueeze(0) # torch.Size([1, 3, 512, 512])
-#                 valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-#                 muilt_views.append(image)
-
-#                 alpha = transform(out['alpha'].permute(2, 0, 1))
-#                 # edge_images.append(alpha)
-#                 depth = transform(out['depth'].permute(2, 0, 1))
-#                 # edge_images.append(depth)
-#                 normal = transform(out['normal'].permute(2, 0, 1))
-#                 # edge_images.append(normal)
-#                 viewcos = transform(out['viewcos'].permute(2, 0, 1))
-#                 # edge_images.append(viewcos)
-
-#                 if self.enable_zero123 and self.step %10 == 0:
-#                     refined_images = self.guidance_zero123.refine(image, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-#                     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-#                     # loss_MSE, refined, refine_img = self.guidance_zero123.refine2(refined_images.squeeze(0), real_render=image.squeeze(0),strength=strength,steps=self.step,valid_mask2 = valid_mask2,edge_images=edge_images)
-#                     # loss = loss + 10*loss_MSE+ F.mse_loss(image, refined_images)
-#                     # edge_images.append([refined_images,alpha,depth,normal,viewcos])
-#                     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-#                     valid_mask2s.append(valid_mask2)
-#                     real_renders.append(image.squeeze(0))
-
-                
-
-
+                transform = transforms.ToPILImage()
+     
             ### novel view (manual batch)
-            render_resolution = 512
+            render_resolution = 128 if step_ratio < 0.3 else (256 if step_ratio < 0.6 else 512)
             images = []
             poses = []
             vers, hors, radii = [], [], []
-            # edge_images = []
-
-
             # avoid too large elevation (> 80 or < -80), and make sure it always cover [min_ver, max_ver]
             min_ver = max(min(self.opt.min_ver, self.opt.min_ver - self.opt.elevation), -80 - self.opt.elevation)
             max_ver = min(max(self.opt.max_ver, self.opt.max_ver - self.opt.elevation), 80 - self.opt.elevation)
+
+
             for _ in range(self.opt.batch_size):
 
                 # render random view
-                ver = np.random.randint(min_ver, max_ver)
+      
+                ver = np.random.randint(-90, max_ver)
+            
+             
                 hor = np.random.randint(-180, 180)
-
-                # if np.random.rand() < 0.5:
-                #     hor = np.random.randint(-180, -5)  # 注意：randint的上限是开区间，所以用-9
-                # else:
-                #     hor = np.random.randint(5, 180)   # 用181才能包含180
                 radius = 0
+       
 
                 vers.append(ver)
                 hors.append(hor)
@@ -558,30 +320,15 @@ class GUI:
                 pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
                 poses.append(pose)
 
-                # random render resolution
-                ssaa = min(2.0, max(0.125, 2 * np.random.random()))
-                out = self.renderer.render(pose, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
+                cur_cam = MiniCam(pose, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx, self.cam.near, self.cam.far)
 
-                image = out["image"] # [H, W, 3] in [0, 1]
-                valid_mask2 = ((out["alpha"] > 0) & (out["viewcos"] > 0.5)).detach()
-          
-                image = image.permute(2,0,1).contiguous().unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0], dtype=torch.float32, device="cuda")
+                out = self.renderer.render(cur_cam, bg_color=bg_color)
 
-
-                transform = transforms.ToPILImage()
-                alpha = transform(out['alpha'].permute(2, 0, 1))
-                # edge_images.append(alpha)
-                depth = transform(out['depth'].permute(2, 0, 1))
-                # edge_images.append(depth)
-                normal = transform(out['normal'].permute(2, 0, 1))
-                # edge_images.append(normal)
-                viewcos = transform(out['viewcos'].permute(2, 0, 1))
-                # edge_images.append(viewcos)
-
-                
-
-
+                image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                depth_default = transform(out["depth"])
                 images.append(image)
+          
 
                 # enable mvdream training
                 if self.opt.mvdream or self.opt.imagedream:
@@ -589,55 +336,176 @@ class GUI:
                         pose_i = orbit_camera(self.opt.elevation + ver, hor + 90 * view_i, self.opt.radius + radius)
                         poses.append(pose_i)
 
-                        out_i = self.renderer.render(pose_i, self.cam.perspective, render_resolution, render_resolution, ssaa=ssaa)
+                        cur_cam_i = MiniCam(pose_i, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx, self.cam.near, self.cam.far)
 
-                        image = out_i["image"].permute(2,0,1).contiguous().unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                        
+                        out_i = self.renderer.render(cur_cam_i, bg_color=bg_color)
+
+                        image = out_i["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
                         images.append(image)
+                    
+  
+            if math.ceil(self.step / 100) != 1 and math.ceil(self.step / 100) != 2:
+                if self.step % 2 ==0:
+                    start,end,interval = -180, 180, 30
+                else:
+                    start,end,interval = 180, -180, -30
 
-            images = torch.cat(images, dim=0)
-            poses = torch.from_numpy(np.stack(poses, axis=0)).to(self.device)
+                for hor in range(start,end,interval): 
+                    ver = 0
+                    if self.step >= 280: 
+                        radius = np.random.uniform(-0.5, 0.5) 
+                    else:
+                        radius = 0
+                    radius = 0
+                    if hor == 0:
+                        continue
+                    vers.append(ver)
+                    hors.append(hor)
+                    radii.append(radius)
+              
+                    pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
+                    poses.append(pose)
 
+                    cur_cam = MiniCam(
+                        pose,
+                        render_resolution,
+                        render_resolution,
+                        self.cam.fovy,
+                        self.cam.fovx,
+                        self.cam.near,
+                        self.cam.far,
+                    )
 
-            # import kiui
-            # kiui.lo(hor, ver)
-            # kiui.vis.plot_image(image)
+                    bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0], dtype=torch.float32, device="cuda")
+                    out = self.renderer.render(cur_cam, bg_color=bg_color)
+                    image = out["image"].unsqueeze(0)# [1, 3, H, W] in [0, 1]
+                    images.append(image)
+              
 
-            # guidance loss
+             
+                start,end,interval = -30, 30, 15
+                for ver in range(start, end, interval):
+                    if ver == 0:
+                        continue
+                    hor = 0
+                    radius = 0
+              
+
+                    vers.append(ver)
+                    hors.append(hor)
+                    radii.append(radius)
+
+                    pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
+                    poses.append(pose)
+
+                    cur_cam = MiniCam(
+                        pose,
+                        render_resolution,
+                        render_resolution,
+                        self.cam.fovy,
+                        self.cam.fovx,
+                        self.cam.near,
+                        self.cam.far,
+                    )
+
+                    bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0], dtype=torch.float32, device="cuda")
+                    out = self.renderer.render(cur_cam, bg_color=bg_color)
+
+                    image = out["image"].unsqueeze(0)# [1, 3, H, W] in [0, 1]
+                    images.append(image)
+          
+                
+           
             
+         
+            images = torch.cat(images, dim=0)
+            entropies = []
+         
+
+  
+      
+            if math.ceil(self.step / 100) <= 2:
+                selected_images = images    
+
+            elif math.ceil(self.step / 100) == 3:
+                for i in range(images.shape[0]):
+                    single_image = images[i]
+                    entropy = image_entropy(single_image)
+                    entropies.append(entropy)
+ 
+                entropy_index_pairs = list(zip(range(len(entropies)), entropies))
+                sorted_entropy_index_pairs_l2s = sorted(entropy_index_pairs, key=lambda x: x[1], reverse=True)
+               
+        
+                pics = 8 #10
+                selected_indices = [pair[0] for pair in sorted_entropy_index_pairs_l2s[:pics]]
+           
+    
+                selected_images = images[selected_indices]     
+                vers = [vers[i] for i in selected_indices]
+                hors = [hors[i] for i in selected_indices]
+                radii = [radii[i] for i in selected_indices]
+            elif math.ceil(self.step / 100) == 4:
+                for i in range(images.shape[0]):
+                    single_image = images[i]
+                    entropy = image_entropy(single_image)
+                    entropies.append(entropy)
+          
+                entropy_index_pairs = list(zip(range(len(entropies)), entropies))
+            
+                sorted_entropy_index_pairs_l2s = sorted(entropy_index_pairs, key=lambda x: x[1], reverse=True)
+        
+                pics = 10 #10
+                selected_indices = [pair[0] for pair in sorted_entropy_index_pairs_l2s[:pics]]
+         
+  
+                selected_images = images[selected_indices]     
+                vers = [vers[i] for i in selected_indices]
+                hors = [hors[i] for i in selected_indices]
+                radii = [radii[i] for i in selected_indices]
+                
+            else:
+                
+                selected_images = images
+
+              
+
+            # guidance loss 
             if self.enable_sd:
                 if self.opt.mvdream or self.opt.imagedream:
-                    # loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, poses, step_ratio)
-                    refined_images = self.guidance_sd.refine(images, poses, strength=strength).float()
-                    refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
-                    loss = loss + self.opt.lambda_sd * F.mse_loss(images, refined_images)
+                    loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, poses, step_ratio=step_ratio if self.opt.anneal_timestep else None)
                 else:
-                    # loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, step_ratio)
-                    refined_images = self.guidance_sd.refine(images, strength=strength).float()
-                    refined_images = F.interpolate(images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
+                    if self.step >800:
+                        loss = loss +  self.guidance_sd.train_step(images[0].unsqueeze(0), vers=vers[0], hors=[hors[0]],step_ratio=step_ratio if self.opt.anneal_timestep else None)
                     
-                    transform(refined_images.squeeze(0)).save("81.png")
-                    loss = loss + self.opt.lambda_sd * F.mse_loss(images, refined_images)
-                    # loss = loss +  self.guidance_sd.train_step(images, vers=vers, hors=hors,step_ratio=step_ratio if self.opt.anneal_timestep else None)
-            # if self.enable_zero123:
+            if self.enable_zero123:
+                if self.step <= 800:
+                    loss = loss + self.opt.lambda_zero123 * self.guidance_zero123.train_step(selected_images, vers, hors, radii, step_ratio=step_ratio if self.opt.anneal_timestep else None, default_elevation=self.opt.elevation, guidance_scale= 3)
                 
-       
-
-            #     refined_images = self.guidance_zero123.refine(images, vers, hors, radii, strength=strength, default_elevation=self.opt.elevation).float()
-            #     refined_images = F.interpolate(refined_images, (render_resolution, render_resolution), mode="bilinear", align_corners=False)
                 
-            #     edge_images.append([transform(refined_images.squeeze(0)).convert('RGB'),alpha,depth,normal,viewcos])
-            #     real_renders.append(image.squeeze(0))
-
-            #     loss_MSE, refined, refine_img = self.guidance_zero123.refine2(real_renders=real_renders,strength=strength,steps=self.step,valid_mask2 = valid_mask2s, edge_images=edge_images)
-            #     lambda_mse = 10
                 
-            #     loss = loss + lambda_mse*loss_MSE + F.mse_loss(images, refined_images)#+  self.opt.lambda_zero123 * loss_p
-
-
+            
             # optimize step
             loss.backward()
             self.optimizer.step()
             self.optimizer.zero_grad()
+            
+            # if self.step == 600:
+            #     self.save_model(mode='model')
+
+            # densify and prune
+            if self.step >= self.opt.density_start_iter and self.step <= self.opt.density_end_iter:
+                viewspace_point_tensor, visibility_filter, radii = out["viewspace_points"], out["visibility_filter"], out["radii"]
+                self.renderer.gaussians.max_radii2D[visibility_filter] = torch.max(self.renderer.gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                self.renderer.gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+
+                if self.step % self.opt.densification_interval == 0:
+        
+                    self.renderer.gaussians.densify_and_prune(self.opt.densify_grad_threshold, min_opacity=0.01, extent=4, max_screen_size=1, step=self.step)
+                
+                if self.step % self.opt.opacity_reset_interval == 0:
+                    self.renderer.gaussians.reset_opacity()
 
         ender.record()
         torch.cuda.synchronize()
@@ -652,12 +520,117 @@ class GUI:
                 f"step = {self.step: 5d} (+{self.train_steps: 2d}) loss = {loss.item():.4f}",
             )
 
-        # dynamic train steps (no need for now)
-        # max allowed train time per-frame is 500 ms
-        # full_t = t / self.train_steps * 16
-        # train_steps = min(16, max(4, int(16 * 500 / full_t)))
-        # if train_steps > self.train_steps * 1.2 or train_steps < self.train_steps * 0.8:
-        #     self.train_steps = train_steps
+    def train_step2(self):
+        starter = torch.cuda.Event(enable_timing=True)
+        ender = torch.cuda.Event(enable_timing=True)
+        starter.record()
+        # print(self.input_img_torch.shape)
+        
+
+        for _ in range(self.train_steps):
+
+            self.step += 1
+            step_ratio = min(1, self.step / self.opt.iters) #self.opt.iters)
+
+            # update lr
+            self.renderer.gaussians.update_learning_rate(self.step)
+            loss = 0
+
+
+
+               ### known view
+            if self.input_img_torch is not None and not self.opt.imagedream:
+                cur_cam = self.fixed_cam
+                out = self.renderer.render(cur_cam)
+
+                # rgb loss
+                image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                loss = loss + 10000 * (step_ratio if self.opt.warmup_rgb_loss else 1) * F.mse_loss(image, self.input_img_torch)
+                # mask loss
+                mask = out["alpha"].unsqueeze(0) # [1, 1, H, W] in [0, 1]
+                loss = loss + 1000 * (step_ratio if self.opt.warmup_rgb_loss else 1) * F.mse_loss(mask, self.input_mask_torch)
+#                 
+            ### novel view (manual batch)
+            render_resolution = 512  #512
+            images = []
+            masks = []
+            poses = []
+            vers, hors, radii = [], [], []
+            # avoid too large elevation (> 80 or < -80), and make sure it always cover [min_ver, max_ver]
+            min_ver = max(min(self.opt.min_ver, self.opt.min_ver - self.opt.elevation), -80 - self.opt.elevation)
+            max_ver = min(max(self.opt.max_ver, self.opt.max_ver - self.opt.elevation), 80 - self.opt.elevation)
+            
+            for _ in range(self.opt.batch_size):
+                # render random view
+                ver = np.random.randint(min_ver, max_ver)
+                hor = np.random.randint(-180, 180)
+                radius = 0
+
+                vers.append(ver)
+                hors.append(hor)
+                radii.append(radius)
+
+                pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
+                poses.append(pose)
+
+                cur_cam = MiniCam(pose, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx, self.cam.near, self.cam.far)
+
+                bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0], dtype=torch.float32, device="cuda")
+                out = self.renderer.render(cur_cam, bg_color=bg_color)
+                image = out["image"].unsqueeze(0)# [1, 3, H, W] in [0, 1]
+                mask = out["alpha"].unsqueeze(0)
+                images.append(image)
+                masks.append(mask)
+            
+    
+                
+            images = torch.cat(images, dim=0)
+            selected_images = images
+
+            # guidance loss 
+            if self.enable_sd:
+                if self.opt.mvdream or self.opt.imagedream:
+                    loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, poses, step_ratio=step_ratio if self.opt.anneal_timestep else None)
+                else:
+                    loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, step_ratio=step_ratio if self.opt.anneal_timestep else None)
+                
+            if self.enable_zero123:
+         
+                loss = loss + self.opt.lambda_zero123 * self.guidance_zero123.train_step(selected_images, vers, hors, radii, step_ratio=step_ratio, default_elevation=self.opt.elevation)
+      
+            # optimize step
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            
+
+            # densify and prune
+            if self.step >= self.opt.density_start_iter and self.step <= self.opt.density_end_iter:
+                viewspace_point_tensor, visibility_filter, radii = out["viewspace_points"], out["visibility_filter"], out["radii"]
+                self.renderer.gaussians.max_radii2D[visibility_filter] = torch.max(self.renderer.gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                self.renderer.gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+
+                if self.step % self.opt.densification_interval == 0:
+                    self.renderer.gaussians.densify_and_prune(self.opt.densify_grad_threshold, min_opacity=0.05, extent=4, max_screen_size=1, step=self.step)
+                
+                if self.step % self.opt.opacity_reset_interval == 0:
+                    self.renderer.gaussians.reset_opacity()
+            # self.save_model(mode='model')
+
+        ender.record()
+        torch.cuda.synchronize()
+        t = starter.elapsed_time(ender)
+
+        self.need_update = True
+
+        if self.gui:
+            dpg.set_value("_log_train_time", f"{t:.4f}ms")
+            dpg.set_value(
+                "_log_train_log",
+                f"step = {self.step: 5d} (+{self.train_steps: 2d}) loss = {loss.item():.4f}",
+            )
+    
+
 
     @torch.no_grad()
     def test_step(self):
@@ -673,17 +646,42 @@ class GUI:
         if self.need_update:
             # render image
 
-            out = self.renderer.render(self.cam.pose, self.cam.perspective, self.H, self.W)
+            cur_cam = MiniCam(
+                self.cam.pose,
+                self.W,
+                self.H,
+                self.cam.fovy,
+                self.cam.fovx,
+                self.cam.near,
+                self.cam.far,
+            )
 
-            buffer_image = out[self.mode]  # [H, W, 3]
+            out = self.renderer.render(cur_cam, self.gaussain_scale_factor)
+
+            buffer_image = out[self.mode]  # [3, H, W]
 
             if self.mode in ['depth', 'alpha']:
-                buffer_image = buffer_image.repeat(1, 1, 3)
+                buffer_image = buffer_image.repeat(3, 1, 1)
                 if self.mode == 'depth':
                     buffer_image = (buffer_image - buffer_image.min()) / (buffer_image.max() - buffer_image.min() + 1e-20)
 
-            self.buffer_image = buffer_image.contiguous().clamp(0, 1).detach().cpu().numpy()
-            
+            buffer_image = F.interpolate(
+                buffer_image.unsqueeze(0),
+                size=(self.H, self.W),
+                mode="bilinear",
+                align_corners=False,
+            ).squeeze(0)
+
+            self.buffer_image = (
+                buffer_image.permute(1, 2, 0)
+                .contiguous()
+                .clamp(0, 1)
+                .contiguous()
+                .detach()
+                .cpu()
+                .numpy()
+            )
+
             # display input_image
             if self.overlay_input_img and self.input_img is not None:
                 self.buffer_image = (
@@ -709,99 +707,213 @@ class GUI:
         print(f'[INFO] load image from {file}...')
         img = cv2.imread(file, cv2.IMREAD_UNCHANGED)
         if img.shape[-1] == 3:
+        
             if self.bg_remover is None:
                 self.bg_remover = rembg.new_session()
             img = rembg.remove(img, session=self.bg_remover)
+        
+        img = cv2.resize(img, (self.W, self.H), interpolation=cv2.INTER_AREA)
 
-        img = cv2.resize(
-            img, (self.W, self.H), interpolation=cv2.INTER_AREA
-        )
+        
+      
+        
+        self.processor_normal = NormalBaeDetector.from_pretrained("lllyasviel/Annotators")
+        self.normal = torch.from_numpy(self.processor_normal(img, hand_and_face=False, output_type='cv2')).float().to(self.device).permute(2,0,1)
+        
+
+        img_back = cv2.imread("data/frog180_rgba.png", cv2.IMREAD_UNCHANGED)
+        img_back = cv2.resize(img_back, (self.W, self.H), interpolation=cv2.INTER_AREA)
+
+
+
+
+
         img = img.astype(np.float32) / 255.0
-
         self.input_mask = img[..., 3:]
         # white bg
-        self.input_img = img[..., :3] * self.input_mask + (
-            1 - self.input_mask
-        )
+        self.input_img = img[..., :3] * self.input_mask + (1 - self.input_mask)
         # bgr to rgb
         self.input_img = self.input_img[..., ::-1].copy()
 
-
-        #back
-        file_back  = "data/outr620_rgba.png"
-        img_back = cv2.imread(file_back , cv2.IMREAD_UNCHANGED)
-        if img_back.shape[-1] == 3:
-            if self.bg_remover is None:
-                self.bg_remover = rembg.new_session()
-            img_back = rembg.remove(img_back, session=self.bg_remover)
-
-        img_back = cv2.resize(
-            img_back, (self.W, self.H), interpolation=cv2.INTER_AREA
-        )
         img_back = img_back.astype(np.float32) / 255.0
-
-        self.input_mask_back = img_back[..., 3:]
+        self.input_mask_back = img_back [..., 3:]
         # white bg
-        self.input_img_back = img_back[..., :3] * self.input_mask_back + (
-            1 - self.input_mask_back
-        )
+        self.input_img_back = img_back [..., :3] * self.input_mask_back + (1 - self.input_mask_back)
         # bgr to rgb
-        self.input_img_back = self.input_img_back[..., ::-1].copy()
-        
-        #Right
-        file_Right  = "data/outr620right_rgba.png"
-        img_Right = cv2.imread(file_Right , cv2.IMREAD_UNCHANGED)
-        if img_Right.shape[-1] == 3:
-            if self.bg_remover is None:
-                self.bg_remover = rembg.new_session()
-            img_Right = rembg.remove(img_Right, session=self.bg_remover)
+        self.input_img_back = self.input_img_back [..., ::-1].copy()
 
-        img_Right = cv2.resize(
-            img_Right, (self.W, self.H), interpolation=cv2.INTER_AREA
-        )
-        img_Right = img_Right.astype(np.float32) / 255.0
 
-        self.input_mask_Right = img_Right[..., 3:]
-        # white bg
-        self.input_img_Right = img_Right[..., :3] * self.input_mask_Right + (
-            1 - self.input_mask_Right
-        )
-        # bgr to rgb
-        self.input_img_Right = self.input_img_Right[..., ::-1].copy()
 
-        #left
-        file_left  = "data/outr620left_rgba.png"
-        img_left = cv2.imread(file_left , cv2.IMREAD_UNCHANGED)
-        if img_left.shape[-1] == 3:
-            if self.bg_remover is None:
-                self.bg_remover = rembg.new_session()
-            img_left = rembg.remove(img_left, session=self.bg_remover)
 
-        img_left = cv2.resize(
-            img_left, (self.W, self.H), interpolation=cv2.INTER_AREA
-        )
-        img_left = img_left.astype(np.float32) / 255.0
 
-        self.input_mask_left = img_left[..., 3:]
-        # white bg
-        self.input_img_left = img_left[..., :3] * self.input_mask_left + (
-            1 - self.input_mask_left
-        )
-        # bgr to rgb
-        self.input_img_left = self.input_img_left[..., ::-1].copy()
-        
         # load prompt
         file_prompt = file.replace("_rgba.png", "_caption.txt")
         if os.path.exists(file_prompt):
             print(f'[INFO] load prompt from {file_prompt}...')
             with open(file_prompt, "r") as f:
                 self.prompt = f.read().strip()
+                
     
-    def save_model(self):
+    @torch.no_grad()
+    def edge_loss(self, input_edge, image):
+        H,W=input_edge.shape
+        target_size = (H, W)
+        image =F.interpolate(image, size=target_size, mode='bilinear', align_corners=False)
+        fuse,average_edge = get_edge(image)
+        # print(average_edge.shape)
+        transform = transforms.ToPILImage()
+        # print(average_edge)
+        image4 = transform(average_edge)
+        # image4.save("edge_pic/edge.png")
+        average_edge= torch.FloatTensor(average_edge).to(self.device)
+        loss = F.mse_loss(average_edge, input_edge)
+        return loss
+    
+
+    @torch.no_grad()
+    def save_model(self, mode='geo', texture_size=1024):
         os.makedirs(self.opt.outdir, exist_ok=True)
-    
-        path = os.path.join(self.opt.outdir, self.opt.save_path + '.' + self.opt.mesh_format)
-        self.renderer.export_mesh(path)
+        if mode == 'geo':
+            path = os.path.join(self.opt.outdir, self.opt.save_path + '_mesh.ply')
+            mesh = self.renderer.gaussians.extract_mesh(path, self.opt.density_thresh)
+            mesh.write_ply(path)
+
+        elif mode == 'geo+tex':
+            path = os.path.join(self.opt.outdir, self.opt.save_path + '_mesh.' + self.opt.mesh_format)
+            mesh = self.renderer.gaussians.extract_mesh(path, self.opt.density_thresh)
+
+            # perform texture extraction
+            print(f"[INFO] unwrap uv...")
+            h = w = texture_size
+            mesh.auto_uv()
+            mesh.auto_normal()
+
+            albedo = torch.zeros((h, w, 3), device=self.device, dtype=torch.float32)
+            cnt = torch.zeros((h, w, 1), device=self.device, dtype=torch.float32)
+
+            # self.prepare_train() # tmp fix for not loading 0123
+            # vers = [0]
+            # hors = [0]
+            vers = [0] * 8 + [-45] * 8 + [45] * 8 + [-89.9, 89.9]
+            hors = [0, 45, -45, 90, -90, 135, -135, 180] * 3 + [0, 0]
+
+            render_resolution = 512
+
+            import nvdiffrast.torch as dr
+
+            if not self.opt.force_cuda_rast and (not self.opt.gui or os.name == 'nt'):
+                glctx = dr.RasterizeCudaContext()
+            else:
+                glctx = dr.RasterizeCudaContext()
+                
+            # if not self.opt.gui or os.name == 'nt':
+            #     glctx = dr.RasterizeCudaContext()
+            # else:
+            #     glctx = dr.RasterizeCudaContext()
+
+            for ver, hor in zip(vers, hors):
+                # render image
+                pose = orbit_camera(ver, hor, self.cam.radius)
+
+                cur_cam = MiniCam(
+                    pose,
+                    render_resolution,
+                    render_resolution,
+                    self.cam.fovy,
+                    self.cam.fovx,
+                    self.cam.near,
+                    self.cam.far,
+                )
+                
+                cur_out = self.renderer.render(cur_cam)
+
+                rgbs = cur_out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+
+                # enhance texture quality with zero123 [not working well]
+                # if self.opt.guidance_model == 'zero123':
+                #     rgbs = self.guidance.refine(rgbs, [ver], [hor], [0])
+                    # import kiui
+                    # kiui.vis.plot_image(rgbs)
+                    
+                # get coordinate in texture image
+                pose = torch.from_numpy(pose.astype(np.float32)).to(self.device)
+                proj = torch.from_numpy(self.cam.perspective.astype(np.float32)).to(self.device)
+
+                v_cam = torch.matmul(F.pad(mesh.v, pad=(0, 1), mode='constant', value=1.0), torch.inverse(pose).T).float().unsqueeze(0)
+                v_clip = v_cam @ proj.T
+                rast, rast_db = dr.rasterize(glctx, v_clip, mesh.f, (render_resolution, render_resolution))
+
+                depth, _ = dr.interpolate(-v_cam[..., [2]], rast, mesh.f) # [1, H, W, 1]
+                depth = depth.squeeze(0) # [H, W, 1]
+
+                alpha = (rast[0, ..., 3:] > 0).float()
+
+                uvs, _ = dr.interpolate(mesh.vt.unsqueeze(0), rast, mesh.ft)  # [1, 512, 512, 2] in [0, 1]
+
+                # use normal to produce a back-project mask
+                normal, _ = dr.interpolate(mesh.vn.unsqueeze(0).contiguous(), rast, mesh.fn)
+                normal = safe_normalize(normal[0])
+
+                # rotated normal (where [0, 0, 1] always faces camera)
+                rot_normal = normal @ pose[:3, :3]
+                viewcos = rot_normal[..., [2]]
+
+                mask = (alpha > 0) & (viewcos > 0.5)  # [H, W, 1]
+                mask = mask.view(-1)
+
+                uvs = uvs.view(-1, 2).clamp(0, 1)[mask]
+                rgbs = rgbs.view(3, -1).permute(1, 0)[mask].contiguous()
+                
+                # update texture image
+                cur_albedo, cur_cnt = mipmap_linear_grid_put_2d(
+                    h, w,
+                    uvs[..., [1, 0]] * 2 - 1,
+                    rgbs,
+                    min_resolution=256,
+                    return_count=True,
+                )
+                
+                # albedo += cur_albedo
+                # cnt += cur_cnt
+                mask = cnt.squeeze(-1) < 0.1
+                albedo[mask] += cur_albedo[mask]
+                cnt[mask] += cur_cnt[mask]
+
+            mask = cnt.squeeze(-1) > 0
+            albedo[mask] = albedo[mask] / cnt[mask].repeat(1, 3)
+
+            mask = mask.view(h, w)
+
+            albedo = albedo.detach().cpu().numpy()
+            mask = mask.detach().cpu().numpy()
+
+            # dilate texture
+            from sklearn.neighbors import NearestNeighbors
+            from scipy.ndimage import binary_dilation, binary_erosion
+
+            inpaint_region = binary_dilation(mask, iterations=32)
+            inpaint_region[mask] = 0
+
+            search_region = mask.copy()
+            not_search_region = binary_erosion(search_region, iterations=3)
+            search_region[not_search_region] = 0
+
+            search_coords = np.stack(np.nonzero(search_region), axis=-1)
+            inpaint_coords = np.stack(np.nonzero(inpaint_region), axis=-1)
+
+            knn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(
+                search_coords
+            )
+            _, indices = knn.kneighbors(inpaint_coords)
+
+            albedo[tuple(inpaint_coords.T)] = albedo[tuple(search_coords[indices[:, 0]].T)]
+
+            mesh.albedo = torch.from_numpy(albedo).to(self.device)
+            mesh.write(path)
+
+        else:
+            path = os.path.join(self.opt.outdir, self.opt.save_path + '_model.ply')
+            self.renderer.gaussians.save_ply(path)
 
         print(f"[INFO] save model to {path}.")
 
@@ -949,12 +1061,32 @@ class GUI:
                 with dpg.group(horizontal=True):
                     dpg.add_text("Save: ")
 
+                    def callback_save(sender, app_data, user_data):
+                        self.save_model(mode=user_data)
+
                     dpg.add_button(
                         label="model",
                         tag="_button_save_model",
-                        callback=self.save_model,
+                        callback=callback_save,
+                        user_data='model',
                     )
                     dpg.bind_item_theme("_button_save_model", theme_button)
+
+                    dpg.add_button(
+                        label="geo",
+                        tag="_button_save_mesh",
+                        callback=callback_save,
+                        user_data='geo',
+                    )
+                    dpg.bind_item_theme("_button_save_mesh", theme_button)
+
+                    dpg.add_button(
+                        label="geo+tex",
+                        tag="_button_save_mesh_with_tex",
+                        callback=callback_save,
+                        user_data='geo+tex',
+                    )
+                    dpg.bind_item_theme("_button_save_mesh_with_tex", theme_button)
 
                     dpg.add_input_text(
                         label="",
@@ -978,11 +1110,6 @@ class GUI:
                             self.training = True
                             dpg.configure_item("_button_train", label="stop")
 
-                    # dpg.add_button(
-                    #     label="init", tag="_button_init", callback=self.prepare_train
-                    # )
-                    # dpg.bind_item_theme("_button_init", theme_button)
-
                     dpg.add_button(
                         label="start", tag="_button_train", callback=callback_train
                     )
@@ -1000,7 +1127,7 @@ class GUI:
                     self.need_update = True
 
                 dpg.add_combo(
-                    ("image", "depth", "alpha", "normal"),
+                    ("image", "depth", "alpha"),
                     label="mode",
                     default_value=self.mode,
                     callback=callback_change_mode,
@@ -1018,6 +1145,19 @@ class GUI:
                     format="%d deg",
                     default_value=np.rad2deg(self.cam.fovy),
                     callback=callback_set_fovy,
+                )
+
+                def callback_set_gaussain_scale(sender, app_data):
+                    self.gaussain_scale_factor = app_data
+                    self.need_update = True
+
+                dpg.add_slider_float(
+                    label="gaussain scale",
+                    min_value=0,
+                    max_value=1,
+                    format="%.2f",
+                    default_value=self.gaussain_scale_factor,
+                    callback=callback_set_gaussain_scale,
                 )
 
         ### register camera handler
@@ -1118,10 +1258,15 @@ class GUI:
     def train(self, iters=500):
         if iters > 0:
             self.prepare_train()
-            for i in tqdm.trange(iters):
+            for i in tqdm.trange(iters):#+100
                 self.train_step()
+                   
+            # do a last prune
+            self.renderer.gaussians.prune(min_opacity=0.01, extent=1, max_screen_size=1) #0.01
         # save
-        self.save_model()
+        self.save_model(mode='model')
+        # self.save_model(mode='geo+tex')
+        
         
 
 if __name__ == "__main__":
@@ -1135,17 +1280,11 @@ if __name__ == "__main__":
     # override default config from cli
     opt = OmegaConf.merge(OmegaConf.load(args.config), OmegaConf.from_cli(extras))
 
-    # auto find mesh from stage 1
-    if opt.mesh is None:
-        default_path = os.path.join(opt.outdir, opt.save_path + '_mesh.' + opt.mesh_format)
-        if os.path.exists(default_path):
-            opt.mesh = default_path
-        else:
-            raise ValueError(f"Cannot find mesh from {default_path}, must specify --mesh explicitly!")
-
     gui = GUI(opt)
 
     if opt.gui:
         gui.render()
     else:
-        gui.train(opt.iters_refine)
+        gui.train(opt.iters)
+  
+        

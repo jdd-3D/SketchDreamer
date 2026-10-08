@@ -159,13 +159,10 @@ def main2(input):
     fuse,average = testPich(checkpoint_path, image, model, device, output_dir, args=None)
     # print(fuse)
     # pil_image = Image.fromarray(fuse)
-    # # 保存图像
     # pil_image.save('mask/111.png')
     # cv2.imwrite('mask/111.png', fuse.astype(np.uint8))
-    # 删除张量对象
     # del model
 
-    # 释放缓存的显存
     # torch.cuda.empty_cache()
     return fuse,average
 
@@ -175,10 +172,8 @@ if __name__ == '__main__':
     print(fuse)
     pil_image = Image.fromarray(fuse)
 
-    # 保存图像
     pil_image.save('output_pillow.png')
 
     pil_image = Image.fromarray(average)
 
-    # 保存图像
     pil_image.save('output_pillow1.png')

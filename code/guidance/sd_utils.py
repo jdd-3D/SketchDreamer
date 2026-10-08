@@ -215,7 +215,7 @@ class StableDiffusion(nn.Module):
     ["/root/autodl-tmp/models--h94--IP-Adapter/snapshots/018e402774aeeddd60609b4ecdb7e298259dc729" ],
     subfolder=["models"],
     weight_name=[ "ip-adapter_sd15.bin"],  #ip-adapter-plus_sd15.bin         ip-adapter_sd15.bin
-    image_encoder_folder="image_encoder"  # 使用多个图像编码器文件夹
+    image_encoder_folder="image_encoder"
 )
 
         self.pipe.set_ip_adapter_scale(1.0)
@@ -710,7 +710,6 @@ class StableDiffusion(nn.Module):
             
         #     final_im.save("muiltview/"+str(i)+".png")
         #     i = i+1
-        #     # 执行转换
         #     final_im = transform2(final_im).unsqueeze(0)        
         #     final_ims.append(final_im)
 
@@ -731,7 +730,6 @@ class StableDiffusion(nn.Module):
         final_im.save("muiltview/8图.png")
 
         # i = i+1
-        # # 执行转换
         final_im = transform2(final_im).to(self.device)  
         # final_ims.append(final_im)
         # final_ims = torch.cat(final_ims, dim=0).to(self.device)
@@ -739,8 +737,6 @@ class StableDiffusion(nn.Module):
         B,C,H,W=pred_rgbs.shape
         reshaped = final_im.view(C, H, B, W)
 
-        # 第二步：调整维度顺序，将8移到最前面
-        # 形状变为[8, 3, 512, 512]
         final_im = reshaped.permute(2, 0, 1, 3)
         transform1(final_im[0]).save("muiltview/test1.png")
         # print(final_im.shape)
@@ -751,7 +747,6 @@ class StableDiffusion(nn.Module):
         # loss = F.mse_loss(pred_rgbs[:8]*masks[:8], final_im[:8]*masks[:8], reduction='sum')
         
         l1_loss = F.l1_loss(pred_rgbs[:8]*masks[:8], final_im[:8]*masks[:8])
-        # LPIPS 需要输入到 [-1, 1]
         pred_lpips = pred_rgbs[:8] * 2.0 - 1.0
         # print("11111111111111----------",pred_rgbs[:8])
         # print("pred_rgbs[:8] min =", pred_rgbs[:8].min().item())
@@ -795,7 +790,7 @@ class StableDiffusion(nn.Module):
                 t = torch.full((batch_size,), t, dtype=torch.long, device=self.device)
                 # print("****", t)
             else:
-                # print("****") # 执行
+                # print("****")
                 t = torch.randint(self.min_step, self.max_step + 1, (batch_size,), dtype=torch.long, device=self.device)
 
             # w(t), sigma_t^2

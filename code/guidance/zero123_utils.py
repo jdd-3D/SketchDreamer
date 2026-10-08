@@ -177,7 +177,6 @@ class Zero123(nn.Module):
 
         refine_img = refine_image(path = path,direction=direction,input = pred_rgb,strength=strength,steps=steps,edge_images=edge_images)
 
-        # 转换为张量并添加批次维度
         # refine_img.save("test.png")
         # pred_rgb.save("test0.png")
         # transform(real_render).convert('RGB').save("test2.png")
@@ -192,23 +191,17 @@ class Zero123(nn.Module):
         # print(refine_img.unsqueeze(0).shape, valid_mask2[0].shape, real_renders.shape)
         return refine_img
 
-        # #转换分布
-        # #IP-adapter 的分布
         # supervise_mean= torch.mean(refine_img, dim=[1,2]).unsqueeze(-1).unsqueeze(-1)
         # supervise_variance=torch.var(refine_img, dim=[1,2], unbiased=False).unsqueeze(-1).unsqueeze(-1).sqrt()
 
-        # #渲染图的分布
         # mean_pred_rgb = torch.mean(render_image, dim=[1, 2]).unsqueeze(-1).unsqueeze(-1)
         # variance_pred_rgb = torch.var(render_image, dim=[1, 2], unbiased=False).unsqueeze(-1).unsqueeze(-1).sqrt()
         
-        # #渲染图归一化
         # normalized_pred_rgb = (render_image - mean_pred_rgb) / variance_pred_rgb
-        # #将渲染图的分布替换成IP-adapter的分布
         # pred_rgb_BCHW_512 = normalized_pred_rgb * supervise_variance + supervise_mean
         # pred_rgb_BCHW_512 = torch.clamp(pred_rgb_BCHW_512, 0, 1)
         # pred = transform(pred_rgb_BCHW_512).convert('RGB')
         
-        # # 保存图像
         # pred.save("test2.png")
         
 
@@ -217,14 +210,12 @@ class Zero123(nn.Module):
 
 
         
-        # # 加载 IP-Adapter
         # pipe.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin") 
         # pipe.set_ip_adapter_scale(0.6)
         # lora_model="goofyai/3d_render_style_xl/3d_render_style_xl.safetensors"
         # model_, name_ = lora_model.rsplit("/", 1)
         # pipe.load_lora_weights(model_, weight_name=name_, lora_scale=1)
 
-        # # 启用模型 CPU 卸载以节省内存
         # pipe.enable_model_cpu_offload()
 
         
@@ -264,7 +255,7 @@ class Zero123(nn.Module):
             noise = torch.randn_like(latents[0].unsqueeze(0))#.repeat(batch_size, 1, 1, 1)
             # noise = noise.repeat(batch_size, 1, 1, 1)
             # print(noise.shape)
-            latents_noisy = self.scheduler.add_noise(latents, noise, t) #给渲染图加噪
+            latents_noisy = self.scheduler.add_noise(latents, noise, t)
             # print(t)
 
             x_in = torch.cat([latents_noisy] * 2)
@@ -292,13 +283,13 @@ class Zero123(nn.Module):
 
             skip = None
             noise_pred,skip = self.unet(
-                torch.cat([x_in, vae_emb], dim=1), #渲染图 + 主图的VAE
+                torch.cat([x_in, vae_emb], dim=1),
                 t_in.to(self.unet.dtype),
                 encoder_hidden_states=cc_emb,
             )#.sample
 
             # noise_pred,skip = self.unet(
-            #     torch.cat([x_in, vae_emb], dim=1), #渲染图 + 主图的VAE
+            #     torch.cat([x_in, vae_emb], dim=1),
             #     t_in.to(self.unet.dtype),
             #     encoder_hidden_states=cc_emb,
             #     skip = skip,
