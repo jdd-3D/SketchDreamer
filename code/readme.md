@@ -46,6 +46,5 @@ pip install git+https://github.com/ashawkey/kiuikit
 
 | Operating system | PyTorch | CUDA | GPU |
 | :--- | :---: | :---: | :--- |
-| Ubuntu 22 | 1.12 | 11.6 | NVIDIA V100 |
-| Windows 10 | 2.1 | 12.1 | NVIDIA RTX 4090 |
+| Ubuntu 22 | 2.7.1 | 11.8 | NVIDIA RTX 4090 |
 ---
