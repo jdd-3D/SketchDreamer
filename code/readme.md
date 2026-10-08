@@ -1,5 +1,4 @@
 # SketchDreamer [![webpage](https://img.shields.io/badge/🌐-Website%20-blue.svg)](https://jdd-3d.github.io/SketchDreamer/) 
----
 ## Installation
 
 > [!NOTE]
