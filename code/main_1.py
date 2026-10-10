@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from PIL import Image
-from diffusers import StableDiffusionXLControlNetImg2ImgPipeline, ControlNetModel, AutoencoderKL
+from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, AutoencoderKL
 from diffusers.utils import load_image
 
 controlnet = ControlNetModel.from_pretrained(
@@ -16,14 +16,14 @@ vae = AutoencoderKL.from_pretrained(
     torch_dtype=torch.float16
 )
 
-pipe = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(
+
+
+pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
     "stabilityai/stable-diffusion-xl-base-1.0",
     controlnet=controlnet,
     vae=vae,
-    cache_dir="/root/autodl-tmp/",
     torch_dtype=torch.float16,
-    variant="fp16",
-    use_safetensors=True
+    add_watermarker=False,
 )
 
 pipe.load_ip_adapter(
