@@ -1357,33 +1357,33 @@ class UNet2DConditionModel(
             down_block_res_samples[4] = skip[4] *strangth#*2
 
 
-          
+            # Ablation experiment
             s5 = skip[5]
             down_block_res_samples[5] = s5 *strangth #*0.8  # 控制风格图中的部分内容
             s6 = skip[6]
             down_block_res_samples[6] = s6 *strangth #*1.2#*2 #*0.1 # 控制风格图中的内容
 
-
+            ## Our method
             # s5 = Fourier_filter(skip[5], threshold=1, scale=0.5)
             # down_block_res_samples[5] = s5 *strangth #*0.8  # 控制风格图中的部分内容
             # s6 = Fourier_filter(skip[6], threshold=1, scale=0.5)
             # down_block_res_samples[6] = s6 *strangth#*1.2#*2 #*0.1 # 控制风格图中的内容
-            # print(1111)
+         
             
 
             #----stage 4
             # print(skip[7]) #torch.Size([2, 1280, 32, 32])
             
             # print(s.shape)
-            down_block_res_samples[7] = skip[7] *strangth#*2 #*3 #控制风格
+            down_block_res_samples[7] = skip[7] *strangth#*2 #*3 
             
             # s7 = Fourier_filter(skip[7], threshold=1, scale=1.8)
-            # down_block_res_samples[7] = s7 *strangth #*0.8  # 控制风格图中的部分内容
+            # down_block_res_samples[7] = s7 *strangth #*0.8  
             
             
             
             down_block_res_samples[8] = skip[8] *strangth#*2
-            #SD独有
+            ##SD
             # down_block_res_samples[9] = skip[9] *strangth#*2
             # down_block_res_samples[10] = skip[10] *strangth#*2
             # down_block_res_samples[11] = skip[11] *strangth#*2
