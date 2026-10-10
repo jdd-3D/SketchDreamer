@@ -1,7 +1,3 @@
-import os
-os.environ["HF_HOME"] = "/root/autodl-tmp"
-os.environ["HF_HUB_CACHE"] = "/root/autodl-tmp"
-
 import torch
 import numpy as np
 from PIL import Image
