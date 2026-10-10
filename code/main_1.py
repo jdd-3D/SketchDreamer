@@ -1,3 +1,4 @@
+# stage 1
 import torch
 import numpy as np
 from PIL import Image
@@ -6,13 +7,11 @@ from diffusers.utils import load_image
 
 controlnet = ControlNetModel.from_pretrained(
     "xinsir/controlnet-canny-sdxl-1.0",
-    cache_dir="/root/autodl-tmp/",
     torch_dtype=torch.float16
 )
 
 vae = AutoencoderKL.from_pretrained(
     "madebyollin/sdxl-vae-fp16-fix",
-    cache_dir="/root/autodl-tmp/",
     torch_dtype=torch.float16
 )
 
