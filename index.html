@@ -85,6 +85,164 @@
             vertical-align: sub;
             margin-left: 1px;
         }
+        #video-showcase {
+            margin: 40px 20px 0;
+            padding: 28px;
+            border: 1px solid #e7e7f1;
+            border-radius: 20px;
+            background: linear-gradient(125deg, #f5f9ff 0%, #f9f7fd 60%, #fff9f4 100%);
+        }
+        #video-showcase .showcase-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+        #video-showcase h2 {
+            margin: 0 0 6px;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        #video-showcase .showcase-description,
+        #video-showcase .showcase-hint {
+            margin: 0;
+            color: #626579;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.6;
+            text-align: left;
+        }
+        #video-showcase .showcase-navigation {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+        #video-showcase .showcase-navigation[hidden] {
+            display: none;
+        }
+        #video-showcase .showcase-range {
+            margin-right: 8px;
+            color: #626579;
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        #video-showcase .showcase-arrow {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            border: 1px solid #d9d9eb;
+            border-radius: 50%;
+            background: #fff;
+            color: #6567c9;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+        #video-showcase .showcase-arrow:hover:not(:disabled) {
+            border-color: #6567c9;
+            background: #efefff;
+        }
+        #video-showcase .showcase-arrow:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        #video-showcase :focus-visible {
+            outline: 3px solid #6567c9;
+            outline-offset: 4px;
+        }
+        #video-showcase .showcase-track {
+            display: flex;
+            gap: 18px;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: thin;
+            scrollbar-color: #c9c9e4 transparent;
+            padding: 2px 2px 14px;
+        }
+        #video-showcase .showcase-card {
+            box-sizing: border-box;
+            flex: 0 0 calc((100% - 36px) / 3);
+            min-width: 0;
+            margin: 0;
+            overflow: hidden;
+            border: 1px solid #e8e8f1;
+            border-radius: 14px;
+            background: #fff;
+            scroll-snap-align: start;
+        }
+        #video-showcase .showcase-card video {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1;
+            object-fit: contain;
+            background: #fff;
+        }
+        #video-showcase .showcase-card figcaption {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 14px 16px;
+            border-top: 1px solid #f0f0f6;
+            color: #35364d;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        #video-showcase .showcase-card figcaption span {
+            color: #7a7d91;
+            font-size: 12px;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        #video-showcase .showcase-hint {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        @media (max-width: 760px) {
+            #video-showcase {
+                margin-right: 16px;
+                margin-left: 16px;
+                padding: 22px;
+            }
+            #video-showcase .showcase-card {
+                flex-basis: calc((100% - 18px) / 2);
+            }
+            #video-showcase .showcase-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+        @media (max-width: 480px) {
+            #video-showcase {
+                padding: 18px;
+            }
+            #video-showcase h2 {
+                font-size: 24px;
+            }
+            #video-showcase .showcase-card {
+                flex-basis: 100%;
+            }
+            #video-showcase .showcase-navigation {
+                justify-content: flex-end;
+                width: 100%;
+            }
+            #video-showcase .showcase-range {
+                margin-right: auto;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #video-showcase .showcase-arrow {
+                transition: none;
+            }
+        }
     </style>
 </head>
 
@@ -118,6 +276,76 @@
     <div id="teaser">
         <div style="width: 96%;text-align: center;"><video autoplay playsinline loop muted src="" poster="./static/images/A4.jpg"></video></div>
     </div>
+
+    <section id="video-showcase" aria-labelledby="video-showcase-title">
+        <div class="showcase-header">
+            <div>
+                <h2 id="video-showcase-title" class="x-gradient-font">3D Generation Showcase</h2>
+                <p class="showcase-description">Explore our generated 3D assets from every angle.</p>
+            </div>
+            <div class="showcase-navigation" hidden>
+                <span class="showcase-range" aria-live="polite" aria-atomic="true">7 examples</span>
+                <button class="showcase-arrow" type="button" data-direction="-1" aria-label="Previous examples" aria-controls="showcase-track" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+                </button>
+                <button class="showcase-arrow" type="button" data-direction="1" aria-label="Next examples" aria-controls="showcase-track">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+                </button>
+            </div>
+        </div>
+        <div id="showcase-track" class="showcase-track" tabindex="0" role="region" aria-label="Seven generated 3D examples. Scroll horizontally to explore.">
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Castle, 360-degree rotation">
+                    <source src="./static/videos/sample1.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample1.mp4">Open the castle video.</a>
+                </video>
+                <figcaption>Castle <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Desk lamp, 360-degree rotation">
+                    <source src="./static/videos/sample2.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample2.mp4">Open the desk lamp video.</a>
+                </video>
+                <figcaption>Desk Lamp <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Table lamp, 360-degree rotation">
+                    <source src="./static/videos/sample3.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample3.mp4">Open the table lamp video.</a>
+                </video>
+                <figcaption>Table Lamp <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Handbag, 360-degree rotation">
+                    <source src="./static/videos/sample4.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample4.mp4">Open the handbag video.</a>
+                </video>
+                <figcaption>Handbag <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Cat, 360-degree rotation">
+                    <source src="./static/videos/sample6.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample6.mp4">Open the cat video.</a>
+                </video>
+                <figcaption>Cat <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Bird, 360-degree rotation">
+                    <source src="./static/videos/sample7.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample7.mp4">Open the bird video.</a>
+                </video>
+                <figcaption>Bird <span>360&deg; view</span></figcaption>
+            </figure>
+            <figure class="showcase-card">
+                <video controls playsinline loop muted preload="metadata" aria-label="Princess, 360-degree rotation">
+                    <source src="./static/videos/sample8.mp4#t=0.1" type="video/mp4">
+                    Your browser does not support embedded video. <a href="./static/videos/sample8.mp4">Open the princess video.</a>
+                </video>
+                <figcaption>Princess <span>360&deg; view</span></figcaption>
+            </figure>
+        </div>
+        <p class="showcase-hint">Scroll or swipe to explore all 7 examples. Use the player controls to pause or view fullscreen.</p>
+    </section>
 
     <div id="abstract" class="x-gradient-block">
         Sketch-driven 3D generation has gained increasing attention owing to its low professional barriers and distinctive artistic expression.
@@ -211,5 +439,87 @@
 }
     </p>
 </div>
+<script>
+    (function () {
+        const showcase = document.getElementById('video-showcase');
+        const track = showcase.querySelector('.showcase-track');
+        const cards = Array.from(track.querySelectorAll('.showcase-card'));
+        const videos = cards.map(function (card) { return card.querySelector('video'); });
+        const previous = showcase.querySelector('[data-direction="-1"]');
+        const next = showcase.querySelector('[data-direction="1"]');
+        const range = showcase.querySelector('.showcase-range');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        function updateNavigation() {
+            const viewport = track.getBoundingClientRect();
+            const visible = cards.map(function (card, index) {
+                const bounds = card.getBoundingClientRect();
+                return bounds.left < viewport.right - 12 && bounds.right > viewport.left + 12 ? index + 1 : null;
+            }).filter(function (index) { return index !== null; });
+            if (visible.length) {
+                range.textContent = visible[0] + (visible.length > 1 ? '\u2013' + visible[visible.length - 1] : '') + ' / ' + cards.length;
+            }
+            previous.disabled = track.scrollLeft <= 2;
+            next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+        }
+
+        function move(direction) {
+            const gap = parseFloat(window.getComputedStyle(track).gap) || 0;
+            const step = cards[0].getBoundingClientRect().width + gap;
+            const visibleCount = Math.max(1, Math.round(track.clientWidth / step));
+            track.scrollBy({ left: direction * visibleCount * step, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+        }
+
+        showcase.querySelector('.showcase-navigation').hidden = false;
+        previous.addEventListener('click', function () { move(-1); });
+        next.addEventListener('click', function () { move(1); });
+        track.addEventListener('scroll', updateNavigation, { passive: true });
+        window.addEventListener('resize', updateNavigation);
+        track.addEventListener('keydown', function (event) {
+            if (event.target !== track) return;
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                move(event.key === 'ArrowLeft' ? -1 : 1);
+            }
+        });
+        updateNavigation();
+
+        if (!('IntersectionObserver' in window)) return;
+        const visibility = new Map();
+        const manuallyPaused = new Set();
+        const automaticPauses = new WeakSet();
+
+        function syncPlayback(video) {
+            const shouldPlay = visibility.get(video) && !document.hidden && !reducedMotion.matches && !manuallyPaused.has(video);
+            if (shouldPlay) {
+                const playback = video.play();
+                if (playback) playback.catch(function () {});
+            } else if (!video.paused) {
+                automaticPauses.add(video);
+                video.pause();
+            }
+        }
+
+        videos.forEach(function (video) {
+            video.addEventListener('pause', function () {
+                if (automaticPauses.has(video)) {
+                    automaticPauses.delete(video);
+                } else {
+                    manuallyPaused.add(video);
+                }
+            });
+            video.addEventListener('play', function () { manuallyPaused.delete(video); });
+        });
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                visibility.set(entry.target, entry.isIntersecting && entry.intersectionRatio >= 0.5);
+                syncPlayback(entry.target);
+            });
+        }, { threshold: [0, 0.5] });
+        videos.forEach(function (video) { observer.observe(video); });
+        document.addEventListener('visibilitychange', function () { videos.forEach(syncPlayback); });
+        reducedMotion.addEventListener('change', function () { videos.forEach(syncPlayback); });
+    })();
+</script>
 </body>
 </html>
