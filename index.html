@@ -105,8 +105,7 @@
             font-weight: 700;
             line-height: 1.25;
         }
-        #video-showcase .showcase-description,
-        #video-showcase .showcase-hint {
+        #video-showcase .showcase-description {
             margin: 0;
             color: #626579;
             font-size: 14px;
@@ -122,13 +121,6 @@
         }
         #video-showcase .showcase-navigation[hidden] {
             display: none;
-        }
-        #video-showcase .showcase-range {
-            margin-right: 8px;
-            color: #626579;
-            font-size: 13px;
-            font-variant-numeric: tabular-nums;
-            white-space: nowrap;
         }
         #video-showcase .showcase-arrow {
             display: grid;
@@ -201,10 +193,6 @@
             font-weight: 400;
             white-space: nowrap;
         }
-        #video-showcase .showcase-hint {
-            margin-top: 8px;
-            font-size: 12px;
-        }
         @media (max-width: 760px) {
             #video-showcase {
                 margin-right: 16px;
@@ -233,9 +221,6 @@
             #video-showcase .showcase-navigation {
                 justify-content: flex-end;
                 width: 100%;
-            }
-            #video-showcase .showcase-range {
-                margin-right: auto;
             }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -284,7 +269,6 @@
                 <p class="showcase-description">Explore our generated 3D assets from every angle.</p>
             </div>
             <div class="showcase-navigation" hidden>
-                <span class="showcase-range" aria-live="polite" aria-atomic="true">7 examples</span>
                 <button class="showcase-arrow" type="button" data-direction="-1" aria-label="Previous examples" aria-controls="showcase-track" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
                 </button>
@@ -344,7 +328,6 @@
                 <figcaption>Princess <span>360&deg; view</span></figcaption>
             </figure>
         </div>
-        <p class="showcase-hint">Scroll or swipe to explore all 7 examples. Use the player controls to pause or view fullscreen.</p>
     </section>
 
     <div id="abstract" class="x-gradient-block">
@@ -447,18 +430,9 @@
         const videos = cards.map(function (card) { return card.querySelector('video'); });
         const previous = showcase.querySelector('[data-direction="-1"]');
         const next = showcase.querySelector('[data-direction="1"]');
-        const range = showcase.querySelector('.showcase-range');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
         function updateNavigation() {
-            const viewport = track.getBoundingClientRect();
-            const visible = cards.map(function (card, index) {
-                const bounds = card.getBoundingClientRect();
-                return bounds.left < viewport.right - 12 && bounds.right > viewport.left + 12 ? index + 1 : null;
-            }).filter(function (index) { return index !== null; });
-            if (visible.length) {
-                range.textContent = visible[0] + (visible.length > 1 ? '\u2013' + visible[visible.length - 1] : '') + ' / ' + cards.length;
-            }
             previous.disabled = track.scrollLeft <= 2;
             next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
         }
