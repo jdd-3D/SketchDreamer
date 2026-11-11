@@ -177,21 +177,35 @@
             background: #fff;
         }
         #video-showcase .showcase-card figcaption {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 14px 16px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding: 14px;
             border-top: 1px solid #f0f0f6;
-            color: #35364d;
-            font-size: 15px;
-            font-weight: 600;
         }
-        #video-showcase .showcase-card figcaption span {
-            color: #7a7d91;
+        #video-showcase .showcase-reference {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+        #video-showcase .showcase-reference img {
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1;
+            object-fit: contain;
+            border: 1px solid #ececf4;
+            border-radius: 8px;
+            background: #fff;
+        }
+        #video-showcase .showcase-reference-label {
+            color: #626579;
             font-size: 12px;
-            font-weight: 400;
-            white-space: nowrap;
+            font-weight: 500;
+            line-height: 1.3;
         }
         @media (max-width: 760px) {
             #video-showcase {
@@ -283,70 +297,160 @@
                     <source src="./static/videos/sample7.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample7.mp4">Open the bird video.</a>
                 </video>
-                <figcaption>Bird <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Bird input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Bird_sketch.png" alt="Bird input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Bird_style.png" alt="Bird style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Castle, 360-degree rotation">
                     <source src="./static/videos/sample1.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample1.mp4">Open the castle video.</a>
                 </video>
-                <figcaption>Castle <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Castle input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Castle_sketch.png" alt="Castle input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Castle_style.png" alt="Castle style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Desk lamp, 360-degree rotation">
                     <source src="./static/videos/sample2.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample2.mp4">Open the desk lamp video.</a>
                 </video>
-                <figcaption>Desk Lamp <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Desk Lamp input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Desk_Lamp_sketch.png" alt="Desk Lamp input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Desk_Lamp_style.png" alt="Desk Lamp style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Robot, 360-degree rotation">
                     <source src="./static/videos/sample3.mp4?v=050cfb1f5f97#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample3.mp4?v=050cfb1f5f97">Open the robot video.</a>
                 </video>
-                <figcaption>Robot <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Robot input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Robot_sketch.png" alt="Robot input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Robot_style.png" alt="Robot style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Handbag, 360-degree rotation">
                     <source src="./static/videos/sample4.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample4.mp4">Open the handbag video.</a>
                 </video>
-                <figcaption>Handbag <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Handbag input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Handbag_sketch.png" alt="Handbag input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Handbag_style.png" alt="Handbag style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Lantern, 360-degree rotation">
                     <source src="./static/videos/sample5.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample5.mp4">Open the lantern video.</a>
                 </video>
-                <figcaption>Lantern <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Lantern input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Lantern_sketch.png" alt="Lantern input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Lantern_style.png" alt="Lantern style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Cat, 360-degree rotation">
                     <source src="./static/videos/sample6.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample6.mp4">Open the cat video.</a>
                 </video>
-                <figcaption>Cat <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Cat input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Cat_sketch.png" alt="Cat input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Cat_style.png" alt="Cat style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Princess, 360-degree rotation">
                     <source src="./static/videos/sample8.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample8.mp4">Open the princess video.</a>
                 </video>
-                <figcaption>Princess <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Princess input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Princess_sketch.png" alt="Princess input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Princess_style.png" alt="Princess style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Sneaker, 360-degree rotation">
                     <source src="./static/videos/sample9.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample9.mp4">Open the sneaker video.</a>
                 </video>
-                <figcaption>Sneaker <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Sneaker input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Sneaker_sketch.png" alt="Sneaker input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Sneaker_stylepng.png" alt="Sneaker style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
             <figure class="showcase-card">
                 <video controls playsinline loop muted preload="metadata" aria-label="Car, 360-degree rotation">
                     <source src="./static/videos/sample10.mp4#t=0.1" type="video/mp4">
                     Your browser does not support embedded video. <a href="./static/videos/sample10.mp4">Open the car video.</a>
                 </video>
-                <figcaption>Car <span>360&deg; view</span></figcaption>
+                <figcaption aria-label="Car input images">
+                    <span class="showcase-reference">
+                        <img src="./static/images/Car_sketch.png" alt="Car input sketch" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Sketch</span>
+                    </span>
+                    <span class="showcase-reference">
+                        <img src="./static/images/Car_style.png" alt="Car style reference" width="128" height="128" loading="lazy" decoding="async">
+                        <span class="showcase-reference-label">Style</span>
+                    </span>
+                </figcaption>
             </figure>
         </div>
     </section>
