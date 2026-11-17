@@ -256,6 +256,48 @@
                 transition: none;
             }
         }
+        #rotation-gallery {
+            margin: 40px 20px 0;
+        }
+        #rotation-gallery h2 {
+            margin: 0 0 18px;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        #rotation-gallery .rotation-video-frame {
+            padding: 14px;
+            border: 1px solid #e7e7f1;
+            border-radius: 20px;
+            background: linear-gradient(125deg, #f5f9ff 0%, #f9f7fd 60%, #fff9f4 100%);
+        }
+        #rotation-gallery video {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 2 / 1;
+            object-fit: contain;
+            border-radius: 12px;
+            background: #fff;
+        }
+        @media (max-width: 760px) {
+            #rotation-gallery {
+                margin-right: 16px;
+                margin-left: 16px;
+            }
+        }
+        @media (max-width: 480px) {
+            #rotation-gallery h2 {
+                font-size: 24px;
+            }
+            #rotation-gallery .rotation-video-frame {
+                padding: 8px;
+                border-radius: 16px;
+            }
+            #rotation-gallery video {
+                border-radius: 8px;
+            }
+        }
     </style>
 </head>
 
@@ -487,6 +529,16 @@
         </div>
     </section>
 
+    <section id="rotation-gallery" aria-labelledby="rotation-gallery-title">
+        <h2 id="rotation-gallery-title" class="x-gradient-font">360-Degree Gallery</h2>
+        <div class="rotation-video-frame">
+            <video id="rotation-gallery-video" controls playsinline loop muted preload="metadata" width="3072" height="1536" aria-label="360-degree rotation gallery of generated 3D assets">
+                <source src="./static/videos/video.mp4#t=0.1" type="video/mp4">
+                Your browser does not support embedded video. <a href="./static/videos/video.mp4">Open the rotation gallery video.</a>
+            </video>
+        </div>
+    </section>
+
     <div id="abstract" class="x-gradient-block">
         Sketch-driven 3D generation has gained increasing attention owing to its low professional barriers and distinctive artistic expression.
         Its primary challenge lies in the inherent absence of style information in sketches, which has led mainstream works to incorporate textual prompts to supplement such information.
@@ -587,6 +639,8 @@
         const stage = showcase.querySelector('.showcase-stage');
         const cards = Array.from(track.querySelectorAll('.showcase-card'));
         const videos = cards.map(function (card) { return card.querySelector('video'); });
+        const rotationVideo = document.getElementById('rotation-gallery-video');
+        if (rotationVideo) videos.push(rotationVideo);
         const previous = showcase.querySelector('[data-direction="-1"]');
         const next = showcase.querySelector('[data-direction="1"]');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
